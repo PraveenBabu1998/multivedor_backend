@@ -1,0 +1,137 @@
+wwwroot\css\site.css
+wwwroot\favicon.ico
+wwwroot\js\site.js
+wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css
+wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css.map
+wwwroot\lib\bootstrap\dist\css\bootstrap-grid.min.css
+wwwroot\lib\bootstrap\dist\css\bootstrap-grid.min.css.map
+wwwroot\lib\bootstrap\dist\css\bootstrap-grid.rtl.css
+wwwroot\lib\bootstrap\dist\css\bootstrap-grid.rtl.css.map
+wwwroot\lib\bootstrap\dist\css\bootstrap-grid.rtl.min.css
+wwwroot\lib\bootstrap\dist\css\bootstrap-grid.rtl.min.css.map
+wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.css
+wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.css.map
+wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.min.css
+wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.min.css.map
+wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.rtl.css
+wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.rtl.css.map
+wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.rtl.min.css
+wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.rtl.min.css.map
+wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.css
+wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.css.map
+wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.min.css
+wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.min.css.map
+wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.rtl.css
+wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.rtl.css.map
+wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.rtl.min.css
+wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.rtl.min.css.map
+wwwroot\lib\bootstrap\dist\css\bootstrap.css
+wwwroot\lib\bootstrap\dist\css\bootstrap.css.map
+wwwroot\lib\bootstrap\dist\css\bootstrap.min.css
+wwwroot\lib\bootstrap\dist\css\bootstrap.min.css.map
+wwwroot\lib\bootstrap\dist\css\bootstrap.rtl.css
+wwwroot\lib\bootstrap\dist\css\bootstrap.rtl.css.map
+wwwroot\lib\bootstrap\dist\css\bootstrap.rtl.min.css
+wwwroot\lib\bootstrap\dist\css\bootstrap.rtl.min.css.map
+wwwroot\lib\bootstrap\dist\js\bootstrap.bundle.js
+wwwroot\lib\bootstrap\dist\js\bootstrap.bundle.js.map
+wwwroot\lib\bootstrap\dist\js\bootstrap.bundle.min.js
+wwwroot\lib\bootstrap\dist\js\bootstrap.bundle.min.js.map
+wwwroot\lib\bootstrap\dist\js\bootstrap.esm.js
+wwwroot\lib\bootstrap\dist\js\bootstrap.esm.js.map
+wwwroot\lib\bootstrap\dist\js\bootstrap.esm.min.js
+wwwroot\lib\bootstrap\dist\js\bootstrap.esm.min.js.map
+wwwroot\lib\bootstrap\dist\js\bootstrap.js
+wwwroot\lib\bootstrap\dist\js\bootstrap.js.map
+wwwroot\lib\bootstrap\dist\js\bootstrap.min.js
+wwwroot\lib\bootstrap\dist\js\bootstrap.min.js.map
+wwwroot\lib\bootstrap\LICENSE
+wwwroot\lib\jquery-validation-unobtrusive\dist\jquery.validate.unobtrusive.js
+wwwroot\lib\jquery-validation-unobtrusive\dist\jquery.validate.unobtrusive.min.js
+wwwroot\lib\jquery-validation-unobtrusive\LICENSE.txt
+wwwroot\lib\jquery-validation\dist\additional-methods.js
+wwwroot\lib\jquery-validation\dist\additional-methods.min.js
+wwwroot\lib\jquery-validation\dist\jquery.validate.js
+wwwroot\lib\jquery-validation\dist\jquery.validate.min.js
+wwwroot\lib\jquery-validation\LICENSE.md
+wwwroot\lib\jquery\dist\jquery.js
+wwwroot\lib\jquery\dist\jquery.min.js
+wwwroot\lib\jquery\dist\jquery.min.map
+wwwroot\lib\jquery\dist\jquery.slim.js
+wwwroot\lib\jquery\dist\jquery.slim.min.js
+wwwroot\lib\jquery\dist\jquery.slim.min.map
+wwwroot\lib\jquery\LICENSE.txt
+wwwroot\uploads\categories\b36ab3ad-e860-4a08-9080-799bead19f7d_safa 2.png
+wwwroot\uploads\categories\f139ef26-1090-40c7-8de6-5d059cb4b8e0_safa 2.png
+wwwroot\uploads\categories\66b444de-ebb4-4bb9-b1a0-5ef3102e8835_TRACKWIZE - LOGO.png
+wwwroot\uploads\categories\df2076df-7742-42a3-9e8c-228e6f2c18b1_TRACKWIZE - LOGO.png
+wwwroot\uploads\categories\fc5e00fd-2d85-4c3a-8ab8-4bbbdb718883_TRACKWIZE - LOGO.png
+wwwroot\uploads\categories\81107aeb-19fd-426d-9a1c-e0bc88faca7d_TRACKWIZE - LOGO.png
+wwwroot\uploads\categories\9d439b1d-54b7-4e07-a8a1-6b2fa8bfd135_TRACKWIZE - LOGO.png
+wwwroot\uploads\categories\f0bbbf40-509f-4be5-86c2-9fd8559d7518_TRACKWIZE - LOGO.png
+wwwroot\uploads\categories\788f3b08-cc54-4a9a-920c-0803f366ac2a_TRACKWIZE - LOGO.png
+wwwroot\uploads\categories\57397f56-72ea-4f30-a26e-0c8a66bd3dd8_TRACKWIZE - LOGO.png
+wwwroot\uploads\categories\ff1a1cc8-2577-41ed-9393-8f641d971971_TRACKWIZE - LOGO.png
+wwwroot\uploads\categories\3ce74d98-fc1d-4071-a3a4-6670f4aeedd6_TRACKWIZE - LOGO.png
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\css\site.css
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\favicon.ico
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\js\site.js
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css.map
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap-grid.min.css
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap-grid.min.css.map
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap-grid.rtl.css
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap-grid.rtl.css.map
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap-grid.rtl.min.css
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap-grid.rtl.min.css.map
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.css
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.css.map
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.min.css
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.min.css.map
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.rtl.css
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.rtl.css.map
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.rtl.min.css
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.rtl.min.css.map
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.css
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.css.map
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.min.css
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.min.css.map
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.rtl.css
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.rtl.css.map
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.rtl.min.css
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.rtl.min.css.map
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap.css
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap.css.map
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap.min.css
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap.min.css.map
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap.rtl.css
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap.rtl.css.map
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap.rtl.min.css
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\css\bootstrap.rtl.min.css.map
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\js\bootstrap.bundle.js
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\js\bootstrap.bundle.js.map
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\js\bootstrap.bundle.min.js
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\js\bootstrap.bundle.min.js.map
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\js\bootstrap.esm.js
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\js\bootstrap.esm.js.map
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\js\bootstrap.esm.min.js
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\js\bootstrap.esm.min.js.map
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\js\bootstrap.js
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\js\bootstrap.js.map
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\js\bootstrap.min.js
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\bootstrap\dist\js\bootstrap.min.js.map
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\jquery-validation-unobtrusive\dist\jquery.validate.unobtrusive.js
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\jquery-validation-unobtrusive\dist\jquery.validate.unobtrusive.min.js
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\jquery-validation-unobtrusive\LICENSE.txt
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\jquery-validation\dist\additional-methods.js
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\jquery-validation\dist\additional-methods.min.js
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\jquery-validation\dist\jquery.validate.js
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\jquery-validation\dist\jquery.validate.min.js
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\jquery-validation\LICENSE.md
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\jquery\dist\jquery.js
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\jquery\dist\jquery.min.js
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\jquery\dist\jquery.min.map
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\jquery\dist\jquery.slim.js
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\jquery\dist\jquery.slim.min.js
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\jquery\dist\jquery.slim.min.map
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\lib\jquery\LICENSE.txt
