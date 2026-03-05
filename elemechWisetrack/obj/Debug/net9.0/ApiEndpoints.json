@@ -258,6 +258,22 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "elemechWisetrack.Controllers.ColorsController",
+    "Method": "AddColors",
+    "RelativePath": "api/colors/insert",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "elemechWisetrack.Models.ProductsCollors",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "elemechWisetrack.Controllers.AuthController",
     "Method": "ForgotPassword",
     "RelativePath": "api/forgotpassword",
@@ -317,7 +333,7 @@
   {
     "ContainingType": "elemechWisetrack.Controllers.ProductsController",
     "Method": "UpdateProduct",
-    "RelativePath": "api/products/update",
+    "RelativePath": "api/products/update/{productId}",
     "HttpMethod": "PUT",
     "IsController": true,
     "Order": 0,
@@ -325,7 +341,7 @@
       {
         "Name": "productId",
         "Type": "System.Guid",
-        "IsRequired": false
+        "IsRequired": true
       },
       {
         "Name": "request",

@@ -373,3 +373,4 @@ C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\obj\Debug\net9.0\c
 C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\obj\Debug\net9.0\compressed\t0qo7o574p-dd6z7egasc.gz
 C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\obj\Debug\net9.0\compressed\b9lhb08218-5pze98is44.gz
 C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\bin\Debug\net9.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\obj\Debug\net9.0\elemechWisetrack.sourcelink.json

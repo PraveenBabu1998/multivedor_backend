@@ -25,12 +25,14 @@ namespace elemechWisetrack.Controllers
             try
             {
                 string userEmail = User.FindFirst(ClaimTypes.Email)?.Value ??
-                    User.FindFirst("UserName")?.Value ??
-                    User.FindFirst("email")?.Value;
+                                   User.FindFirst("UserName")?.Value ??
+                                   User.FindFirst("email")?.Value;
 
-                return _businessLayer.AddColors(request);
+                var result = await _businessLayer.AddColors(userEmail, request);
+
+                return Ok(result);   // ✅ Now returning IActionResult
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 return StatusCode(500, ex.Message);
             }
