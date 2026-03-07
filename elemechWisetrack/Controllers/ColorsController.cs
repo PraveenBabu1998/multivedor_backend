@@ -1,4 +1,5 @@
-﻿using elemechWisetrack.BusinessLayer;
+﻿using Azure.Core;
+using elemechWisetrack.BusinessLayer;
 using elemechWisetrack.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -36,6 +37,100 @@ namespace elemechWisetrack.Controllers
             {
                 return StatusCode(500, ex.Message);
             }
+        }
+
+        [Route("get")]
+        [HttpGet]
+        public async Task<IActionResult> GetColors()
+        {
+            try
+            {
+                string userEmail = User.FindFirst(ClaimTypes.Email)?.Value ??
+                                   User.FindFirst("UserName")?.Value ??
+                                   User.FindFirst("email")?.Value;
+
+                var result = await _businessLayer.GetColors();
+
+                return Ok(result);   // ✅ Now returning IActionResult
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpPut("update-color/{id}")]
+        public async Task<IActionResult> UpdateColor(Guid id, [FromBody] ProductsCollors request)
+        {
+            try
+            {
+                string userEmail = User.FindFirst(ClaimTypes.Email)?.Value ??
+                                   User.FindFirst("UserName")?.Value ??
+                                   User.FindFirst("email")?.Value;
+
+                var result = await _businessLayer.UpdateColor(userEmail, id, request);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
+            }
+        }
+
+        [HttpPatch("toggle-color/{id}")]
+        public async Task<IActionResult> ToggleColor(Guid id)
+        {
+            try
+            {
+                var result = await _businessLayer.ToggleColorStatus(id);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
+            }
+        }
+
+
+        [HttpDelete("soft-delete-color/{id}")]
+        public async Task<IActionResult> SoftDeleteColor(Guid id)
+        {
+            try
+            {
+                var result = await _businessLayer.SoftDeleteColor(id);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
+            }
+        }
+
+        [HttpPut("restore-color/{id}")]
+        public async Task<IActionResult> RestoreColor(Guid id)
+        {
+            var result = await _businessLayer.RestoreColor(id);
+            return Ok(result);
+        }
+
+        [HttpDelete("delete-color/{id}")]
+        public async Task<IActionResult> DeleteColor(Guid id)
+        {
+            var result = await _businessLayer.DeleteColor(id);
+            return Ok(result);
         }
     }
 }
