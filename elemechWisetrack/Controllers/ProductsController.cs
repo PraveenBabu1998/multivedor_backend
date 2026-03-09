@@ -19,38 +19,31 @@ namespace elemechWisetrack.Controllers
 
         [Route("insert")]
         [HttpPost]
-        public async Task<IActionResult> AddSingleProduct([FromBody] ProductInsertModel request)
+        public async Task<IActionResult> AddSingleProduct([FromForm] ProductInsertModel request)
         {
-
             try
             {
                 string userEmail = User.FindFirst(ClaimTypes.Email)?.Value ??
-                    User.FindFirst("email")?.Value ??
-                    User.FindFirst("UserName").Value;
+                                   User.FindFirst("email")?.Value ??
+                                   User.FindFirst("UserName")?.Value;
 
                 if (string.IsNullOrEmpty(userEmail))
                 {
-                    BadRequest("User Not Found");
+                    return BadRequest("User Not Found");
                 }
 
-                var result = _businessLayer.AddSingleProduct(userEmail, request);
+                var result = await _businessLayer.AddSingleProduct(userEmail, request);
 
-                return Ok(new
-                {
-                    Success = true,
-                    data = result,
-                });
+                return Ok(result);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return StatusCode(500, new
                 {
-                    Success = false,
-                    Message = ex.Message,
-
+                    success = false,
+                    message = ex.Message
                 });
             }
-            
         }
 
         [Route("list")]
@@ -61,23 +54,58 @@ namespace elemechWisetrack.Controllers
             return Ok(new {Success = true, Message = "Product list successfully",data = data});
         }
 
-        [Route("update/{productId}")]
-        [HttpPut]
-        public async Task<IActionResult> UpdateProduct(
-    Guid productId,
-    ProductInsertModel request)
+        [Route("list-by-admin")]
+        [HttpGet]
+        public async Task<IActionResult> GetAllProductsOfAdmin(int? page, int? pageSize)
         {
 
             string userEmail = User.FindFirst(ClaimTypes.Email)?.Value ??
                 User.FindFirst("UserEmail")?.Value ??
                 User.FindFirst("email")?.Value;
+            var data = await _businessLayer.GetAllProductsOfAdmin(userEmail, page, pageSize);
+            return Ok(new { Success = true, Message = "Product list successfully", data = data });
+        }
+
+        [Route("update/{productId}")]
+        [HttpPut]
+        public async Task<IActionResult> UpdateProduct(
+    Guid productId,
+    [FromForm] ProductInsertModel request)
+        {
+            string userEmail = User.FindFirst(ClaimTypes.Email)?.Value ??
+                               User.FindFirst("UserEmail")?.Value ??
+                               User.FindFirst("email")?.Value;
+
             var data = await _businessLayer.UpdateProduct(productId, userEmail, request);
+
             return Ok(new
             {
                 Success = true,
-                Message = "Product update successfully",
+                Message = "Product updated successfully",
                 data = data
             });
         }
+
+        [HttpDelete("soft-delete-product/{productId}")]
+        public async Task<IActionResult> DeleteProduct(Guid productId)
+        {
+            var result = await _businessLayer.DeleteProduct(productId);
+            return Ok(result);
+        }
+
+        [HttpPut("restore-product/{productId}")]
+        public async Task<IActionResult> RestoreProduct(Guid productId)
+        {
+            var result = await _businessLayer.RestoreProduct(productId);
+            return Ok(result);
+        }
+
+        [HttpDelete("permanent-delete-product/{productId}")]
+        public async Task<IActionResult> PermanentDeleteProduct(Guid productId)
+        {
+            var result = await _businessLayer.PermanentDeleteProduct(productId);
+            return Ok(result);
+        }
+
     }
 }

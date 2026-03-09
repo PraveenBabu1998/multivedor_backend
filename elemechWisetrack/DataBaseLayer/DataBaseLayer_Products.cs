@@ -6,13 +6,22 @@ namespace elemechWisetrack.DataBaseLayer
 {
     public interface IDataBaseLayer_Products
     {
-        Task<object> AddSingleProduct(string userEmail, [FromBody] ProductInsertModel request, string baseSlug);
+        Task<object> AddSingleProduct(
+    string userEmail,
+    ProductInsertModel request,
+    string baseSlug);
         Task<object> GetAllProducts(int? page, int? pageSize);
+        Task<object> GetAllProductsOfAdmin(string userEmail, int? page, int? pageSize);
         Task<object> UpdateProduct(
     Guid productId,
     string userEmail,
     ProductInsertModel request,
     string? baseSlug);
+
+        Task<object> DeleteProduct(Guid productId);
+        Task<object> RestoreProduct(Guid productId);
+        Task<object> PermanentDeleteProduct(Guid productId);
+
     }
 
     public partial interface IDataBaseLayer : IDataBaseLayer_Products { }
@@ -31,13 +40,10 @@ namespace elemechWisetrack.DataBaseLayer
                     await conn.OpenAsync();
 
                     // =============================
-                    // 1️⃣ Get User Id From Email
+                    // 1️⃣ Get User Id
                     // =============================
-                    string getUserQuery = @"
-                SELECT ""Id""
-                FROM ""AspNetUsers""
-                WHERE ""Email"" = @Email
-                LIMIT 1;";
+                    string getUserQuery = @"SELECT ""Id"" FROM ""AspNetUsers"" 
+                                    WHERE ""Email""=@Email LIMIT 1";
 
                     Guid userId;
 
@@ -49,84 +55,164 @@ namespace elemechWisetrack.DataBaseLayer
 
                         if (result == null)
                         {
-                            return new
-                            {
-                                Success = false,
-                                Message = "User not found"
-                            };
+                            return new { success = false, message = "User not found" };
                         }
 
                         userId = Guid.Parse(result.ToString());
                     }
 
-                    // 🔥 Generate Unique Slug
+                    // =============================
+                    // 2️⃣ Generate SKU
+                    // =============================
+                    string sku = "SKU-" + DateTime.Now.Ticks;
+
                     string slug = baseSlug;
 
-                    // 🔥 Generate SKU
-                    string sku = await GenerateSku();
+                    // =============================
+                    // 3️⃣ Upload Main Image
+                    // =============================
+                    string mainImagePath = null;
 
+                    if (request.MainImage != null)
+                    {
+                        var folder = Path.Combine(Directory.GetCurrentDirectory(),
+                            "wwwroot/uploads/products");
+
+                        if (!Directory.Exists(folder))
+                            Directory.CreateDirectory(folder);
+
+                        var fileName = Guid.NewGuid() +
+                                       Path.GetExtension(request.MainImage.FileName);
+
+                        var filePath = Path.Combine(folder, fileName);
+
+                        using (var stream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await request.MainImage.CopyToAsync(stream);
+                        }
+
+                        mainImagePath = "/uploads/products/" + fileName;
+                    }
+
+                    // =============================
+                    // 4️⃣ Upload Gallery Images
+                    // =============================
+                    List<string> galleryPaths = new();
+
+                    if (request.GalleryImages != null)
+                    {
+                        foreach (var image in request.GalleryImages)
+                        {
+                            var fileName = Guid.NewGuid() +
+                                           Path.GetExtension(image.FileName);
+
+                            var filePath = Path.Combine(
+                                Directory.GetCurrentDirectory(),
+                                "wwwroot/uploads/products",
+                                fileName);
+
+                            using (var stream = new FileStream(filePath, FileMode.Create))
+                            {
+                                await image.CopyToAsync(stream);
+                            }
+
+                            galleryPaths.Add("/uploads/products/" + fileName);
+                        }
+                    }
+
+                    // =============================
+                    // 5️⃣ Insert Product
+                    // =============================
                     string insertQuery = @"
-                INSERT INTO products (
-                    Name, Slug, ShortDescription, Description,
-                    CategoryId, SubCategoryId, BrandId,
-                    Price, DiscountPrice, CostPrice, TaxPercentage,
-                    SKU, StockQuantity, MinStockQuantity, TrackInventory,
-                    MainImage, GalleryImages,
-                    Weight, Length, Width, Height,
-                    MetaTitle, MetaDescription, MetaKeywords,
-                    IsActive, IsFeatured, IsDeleted,
-                    CreatedBy
-                )
-                VALUES (
-                    @Name, @Slug, @ShortDescription, @Description,
-                    @CategoryId, @SubCategoryId, @BrandId,
-                    @Price, @DiscountPrice, @CostPrice, @TaxPercentage,
-                    @SKU, @StockQuantity, @MinStockQuantity, @TrackInventory,
-                    @MainImage, @GalleryImages,
-                    @Weight, @Length, @Width, @Height,
-                    @MetaTitle, @MetaDescription, @MetaKeywords,
-                    @IsActive, @IsFeatured, @IsDeleted,
-                    @CreatedBy
-                )
-                RETURNING Id;";
+            INSERT INTO products (
+                name, slug, shortdescription, description,
+                categoryid, subcategoryid, brandid,
+                price, discountprice, costprice, taxpercentage,
+                sku, stockquantity, minstockquantity, trackinventory,
+                mainimage, galleryimages,
+                weight, length, width, height,
+                metatitle, metadescription, metakeywords,
+                isactive, isfeatured, isdeleted,
+                createdby
+            )
+            VALUES (
+                @Name,@Slug,@ShortDescription,@Description,
+                @CategoryId,@SubCategoryId,@BrandId,
+                @Price,@DiscountPrice,@CostPrice,@TaxPercentage,
+                @SKU,@StockQuantity,@MinStockQuantity,@TrackInventory,
+                @MainImage,@GalleryImages,
+                @Weight,@Length,@Width,@Height,
+                @MetaTitle,@MetaDescription,@MetaKeywords,
+                @IsActive,@IsFeatured,@IsDeleted,
+                @CreatedBy
+            )
+            RETURNING id;";
 
                     using (var cmd = new NpgsqlCommand(insertQuery, conn))
                     {
                         cmd.Parameters.AddWithValue("@Name", request.Name);
                         cmd.Parameters.AddWithValue("@Slug", slug);
-                        cmd.Parameters.AddWithValue("@ShortDescription", (object?)request.ShortDescription ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@Description", (object?)request.Description ?? DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@ShortDescription",
+                            (object?)request.ShortDescription ?? DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@Description",
+                            (object?)request.Description ?? DBNull.Value);
 
                         cmd.Parameters.AddWithValue("@CategoryId", request.CategoryId);
-                        cmd.Parameters.AddWithValue("@SubCategoryId", (object?)request.SubCategoryId ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@BrandId", (object?)request.BrandId ?? DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@SubCategoryId",
+                            (object?)request.SubCategoryId ?? DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@BrandId",
+                            (object?)request.BrandId ?? DBNull.Value);
 
                         cmd.Parameters.AddWithValue("@Price", request.Price);
-                        cmd.Parameters.AddWithValue("@DiscountPrice", (object?)request.DiscountPrice ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@CostPrice", (object?)request.CostPrice ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@TaxPercentage", (object?)request.TaxPercentage ?? DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@DiscountPrice",
+                            (object?)request.DiscountPrice ?? DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@CostPrice",
+                            (object?)request.CostPrice ?? DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@TaxPercentage",
+                            (object?)request.TaxPercentage ?? DBNull.Value);
 
                         cmd.Parameters.AddWithValue("@SKU", sku);
+
                         cmd.Parameters.AddWithValue("@StockQuantity", request.StockQuantity);
-                        cmd.Parameters.AddWithValue("@MinStockQuantity", (object?)request.MinStockQuantity ?? DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@MinStockQuantity",
+                            (object?)request.MinStockQuantity ?? DBNull.Value);
+
                         cmd.Parameters.AddWithValue("@TrackInventory", request.TrackInventory);
 
-                        cmd.Parameters.AddWithValue("@MainImage", (object?)request.MainImage ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@MainImage",
+                            (object?)mainImagePath ?? DBNull.Value);
 
-                        // 🔥 PostgreSQL TEXT[] support
                         cmd.Parameters.AddWithValue("@GalleryImages",
-                            request.GalleryImages != null && request.GalleryImages.Any()
-                                ? request.GalleryImages.ToArray()
-                                : DBNull.Value);
+                            galleryPaths.Any() ? galleryPaths.ToArray() : DBNull.Value);
 
-                        cmd.Parameters.AddWithValue("@Weight", (object?)request.Weight ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@Length", (object?)request.Length ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@Width", (object?)request.Width ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@Height", (object?)request.Height ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@Weight",
+                            (object?)request.Weight ?? DBNull.Value);
 
-                        cmd.Parameters.AddWithValue("@MetaTitle", (object?)request.MetaTitle ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@MetaDescription", (object?)request.MetaDescription ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@MetaKeywords", (object?)request.MetaKeywords ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@Length",
+                            (object?)request.Length ?? DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@Width",
+                            (object?)request.Width ?? DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@Height",
+                            (object?)request.Height ?? DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@MetaTitle",
+                            (object?)request.MetaTitle ?? DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@MetaDescription",
+                            (object?)request.MetaDescription ?? DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@MetaKeywords",
+                            (object?)request.MetaKeywords ?? DBNull.Value);
 
                         cmd.Parameters.AddWithValue("@IsActive", request.IsActive);
                         cmd.Parameters.AddWithValue("@IsFeatured", request.IsFeatured);
@@ -152,8 +238,7 @@ namespace elemechWisetrack.DataBaseLayer
                 return new
                 {
                     success = false,
-                    message = "Error while adding product",
-                    error = ex.Message
+                    message = ex.Message
                 };
             }
         }
@@ -271,11 +356,155 @@ namespace elemechWisetrack.DataBaseLayer
             }
         }
 
+        public async Task<object> GetAllProductsOfAdmin(string userEmail, int? page, int? pageSize)
+        {
+            try
+            {
+                int basePage = (page.HasValue && page.Value > 0) ? page.Value : 1;
+                int basePageSize = (pageSize.HasValue && pageSize.Value > 0) ? pageSize.Value : 100;
+
+                using (var conn = new NpgsqlConnection(DbConnection))
+                {
+                    await conn.OpenAsync();
+
+                    // Get UserId
+                    string userQuery = @"SELECT ""Id"" FROM ""AspNetUsers"" WHERE ""Email"" = @Email LIMIT 1";
+
+                    Guid userId;
+
+                    using (var userCmd = new NpgsqlCommand(userQuery, conn))
+                    {
+                        userCmd.Parameters.AddWithValue("@Email", userEmail);
+
+                        var result = await userCmd.ExecuteScalarAsync();
+
+                        if (result == null)
+                        {
+                            return new
+                            {
+                                success = false,
+                                message = "User not found"
+                            };
+                        }
+
+                        // convert string to Guid
+                        userId = Guid.Parse(result.ToString());
+                    }
+
+                    int offset = (basePage - 1) * basePageSize;
+
+                    // Total count
+                    string countQuery = @"
+            SELECT COUNT(*)
+            FROM products
+            WHERE IsDeleted = FALSE
+            AND CreatedBy = @UserId;";
+
+                    int totalRecords;
+
+                    using (var countCmd = new NpgsqlCommand(countQuery, conn))
+                    {
+                        countCmd.Parameters.AddWithValue("@UserId", userId);
+                        totalRecords = Convert.ToInt32(await countCmd.ExecuteScalarAsync());
+                    }
+
+                    // Get products
+                    string getQuery = @"
+            SELECT *
+            FROM products
+            WHERE IsDeleted = FALSE
+            AND CreatedBy = @UserId
+            ORDER BY CreatedDate DESC
+            LIMIT @pageSize OFFSET @offset;";
+
+                    var products = new List<object>();
+
+                    using (var cmd = new NpgsqlCommand(getQuery, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@UserId", userId);
+                        cmd.Parameters.AddWithValue("@pageSize", basePageSize);
+                        cmd.Parameters.AddWithValue("@offset", offset);
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                products.Add(new
+                                {
+                                    Id = reader.GetGuid(reader.GetOrdinal("Id")),
+                                    Name = reader["Name"]?.ToString(),
+                                    Slug = reader["Slug"]?.ToString(),
+                                    ShortDescription = reader["ShortDescription"]?.ToString(),
+                                    Description = reader["Description"]?.ToString(),
+
+                                    CategoryId = reader.GetGuid(reader.GetOrdinal("CategoryId")),
+                                    SubCategoryId = reader["SubCategoryId"] == DBNull.Value ? null : (Guid?)reader["SubCategoryId"],
+                                    BrandId = reader["BrandId"] == DBNull.Value ? null : (Guid?)reader["BrandId"],
+
+                                    Price = Convert.ToDecimal(reader["Price"]),
+                                    DiscountPrice = reader["DiscountPrice"] == DBNull.Value ? null : (decimal?)reader["DiscountPrice"],
+                                    CostPrice = reader["CostPrice"] == DBNull.Value ? null : (decimal?)reader["CostPrice"],
+                                    TaxPercentage = reader["TaxPercentage"] == DBNull.Value ? null : (decimal?)reader["TaxPercentage"],
+
+                                    SKU = reader["SKU"]?.ToString(),
+
+                                    StockQuantity = Convert.ToInt32(reader["StockQuantity"]),
+                                    MinStockQuantity = reader["MinStockQuantity"] == DBNull.Value ? null : (int?)reader["MinStockQuantity"],
+                                    TrackInventory = Convert.ToBoolean(reader["TrackInventory"]),
+
+                                    MainImage = reader["MainImage"]?.ToString(),
+
+                                    GalleryImages = reader["GalleryImages"] == DBNull.Value
+        ? new string[] { }
+        : (string[])reader["GalleryImages"],
+
+                                    Weight = reader["Weight"] == DBNull.Value ? null : (decimal?)reader["Weight"],
+                                    Length = reader["Length"] == DBNull.Value ? null : (decimal?)reader["Length"],
+                                    Width = reader["Width"] == DBNull.Value ? null : (decimal?)reader["Width"],
+                                    Height = reader["Height"] == DBNull.Value ? null : (decimal?)reader["Height"],
+
+                                    MetaTitle = reader["MetaTitle"]?.ToString(),
+                                    MetaDescription = reader["MetaDescription"]?.ToString(),
+                                    MetaKeywords = reader["MetaKeywords"]?.ToString(),
+
+                                    IsActive = Convert.ToBoolean(reader["IsActive"]),
+                                    IsFeatured = Convert.ToBoolean(reader["IsFeatured"]),
+                                    IsDeleted = Convert.ToBoolean(reader["IsDeleted"]),
+
+                                    CreatedBy = reader["CreatedBy"] == DBNull.Value ? null : reader["CreatedBy"].ToString(),
+                                    CreatedDate = Convert.ToDateTime(reader["CreatedDate"])
+                                });
+                            }
+                        }
+                    }
+
+                    return new
+                    {
+                        success = true,
+                        page = basePage,
+                        pageSize = basePageSize,
+                        totalRecords,
+                        totalPages = (int)Math.Ceiling((double)totalRecords / basePageSize),
+                        data = products
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new
+                {
+                    success = false,
+                    message = "Error while fetching products",
+                    error = ex.Message
+                };
+            }
+        }
+
         public async Task<object> UpdateProduct(
-    Guid productId,
-    string userEmail,
-    ProductInsertModel request,
-    string? baseSlug)
+Guid productId,
+string userEmail,
+ProductInsertModel request,
+string baseSlug)
         {
             try
             {
@@ -283,12 +512,9 @@ namespace elemechWisetrack.DataBaseLayer
                 {
                     await conn.OpenAsync();
 
-                    // =============================
-                    // 1️⃣ Check Product Exists
-                    // =============================
+                    // Check product exists
                     string checkQuery = @"SELECT id FROM products 
-                                  WHERE id = @Id AND IsDeleted = FALSE
-                                  LIMIT 1;";
+                                  WHERE id=@Id AND IsDeleted=FALSE LIMIT 1";
 
                     using (var checkCmd = new NpgsqlCommand(checkQuery, conn))
                     {
@@ -306,51 +532,97 @@ namespace elemechWisetrack.DataBaseLayer
                         }
                     }
 
-                    // =============================
-                    // 2️⃣ Generate Slug (Optional)
-                    // =============================
-                    string slug = baseSlug ?? request.Name.ToLower().Replace(" ", "-");
+                    // Generate slug
+                    string slug = baseSlug;
 
-                    // =============================
-                    // 3️⃣ Update Query
-                    // =============================
+                    // Upload Main Image
+                    string mainImagePath = null;
+
+                    if (request.MainImage != null)
+                    {
+                        var folder = Path.Combine(
+                            Directory.GetCurrentDirectory(),
+                            "wwwroot/uploads/products");
+
+                        if (!Directory.Exists(folder))
+                            Directory.CreateDirectory(folder);
+
+                        var fileName = Guid.NewGuid() +
+                                       Path.GetExtension(request.MainImage.FileName);
+
+                        var filePath = Path.Combine(folder, fileName);
+
+                        using (var stream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await request.MainImage.CopyToAsync(stream);
+                        }
+
+                        mainImagePath = "/uploads/products/" + fileName;
+                    }
+
+                    // Upload Gallery Images
+                    List<string> galleryPaths = new();
+
+                    if (request.GalleryImages != null)
+                    {
+                        foreach (var image in request.GalleryImages)
+                        {
+                            var fileName = Guid.NewGuid() +
+                                           Path.GetExtension(image.FileName);
+
+                            var filePath = Path.Combine(
+                                Directory.GetCurrentDirectory(),
+                                "wwwroot/uploads/products",
+                                fileName);
+
+                            using (var stream = new FileStream(filePath, FileMode.Create))
+                            {
+                                await image.CopyToAsync(stream);
+                            }
+
+                            galleryPaths.Add("/uploads/products/" + fileName);
+                        }
+                    }
+
+                    // Update query
                     string updateQuery = @"
-                UPDATE products SET
-                    Name = @Name,
-                    Slug = @Slug,
-                    ShortDescription = @ShortDescription,
-                    Description = @Description,
+            UPDATE products SET
+                Name=@Name,
+                Slug=@Slug,
+                ShortDescription=@ShortDescription,
+                Description=@Description,
 
-                    CategoryId = @CategoryId,
-                    SubCategoryId = @SubCategoryId,
-                    BrandId = @BrandId,
+                CategoryId=@CategoryId,
+                SubCategoryId=@SubCategoryId,
+                BrandId=@BrandId,
 
-                    Price = @Price,
-                    DiscountPrice = @DiscountPrice,
-                    CostPrice = @CostPrice,
-                    TaxPercentage = @TaxPercentage,
+                Price=@Price,
+                DiscountPrice=@DiscountPrice,
+                CostPrice=@CostPrice,
+                TaxPercentage=@TaxPercentage,
 
-                    StockQuantity = @StockQuantity,
-                    MinStockQuantity = @MinStockQuantity,
-                    TrackInventory = @TrackInventory,
+                StockQuantity=@StockQuantity,
+                MinStockQuantity=@MinStockQuantity,
+                TrackInventory=@TrackInventory,
 
-                    MainImage = @MainImage,
-                    GalleryImages = @GalleryImages,
+                MainImage=COALESCE(@MainImage, MainImage),
+                GalleryImages=COALESCE(@GalleryImages, GalleryImages),
 
-                    Weight = @Weight,
-                    Length = @Length,
-                    Width = @Width,
-                    Height = @Height,
+                Weight=@Weight,
+                Length=@Length,
+                Width=@Width,
+                Height=@Height,
 
-                    MetaTitle = @MetaTitle,
-                    MetaDescription = @MetaDescription,
-                    MetaKeywords = @MetaKeywords,
+                MetaTitle=@MetaTitle,
+                MetaDescription=@MetaDescription,
+                MetaKeywords=@MetaKeywords,
 
-                    IsActive = @IsActive,
-                    IsFeatured = @IsFeatured,
-                    IsDeleted = @IsDeleted
-                WHERE Id = @Id
-                RETURNING Id;";
+                IsActive=@IsActive,
+                IsFeatured=@IsFeatured,
+                IsDeleted=@IsDeleted
+
+            WHERE Id=@Id
+            RETURNING Id;";
 
                     using (var cmd = new NpgsqlCommand(updateQuery, conn))
                     {
@@ -358,37 +630,65 @@ namespace elemechWisetrack.DataBaseLayer
 
                         cmd.Parameters.AddWithValue("@Name", request.Name);
                         cmd.Parameters.AddWithValue("@Slug", slug);
-                        cmd.Parameters.AddWithValue("@ShortDescription", (object?)request.ShortDescription ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@Description", (object?)request.Description ?? DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@ShortDescription",
+                            (object?)request.ShortDescription ?? DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@Description",
+                            (object?)request.Description ?? DBNull.Value);
 
                         cmd.Parameters.AddWithValue("@CategoryId", request.CategoryId);
-                        cmd.Parameters.AddWithValue("@SubCategoryId", (object?)request.SubCategoryId ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@BrandId", (object?)request.BrandId ?? DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@SubCategoryId",
+                            (object?)request.SubCategoryId ?? DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@BrandId",
+                            (object?)request.BrandId ?? DBNull.Value);
 
                         cmd.Parameters.AddWithValue("@Price", request.Price);
-                        cmd.Parameters.AddWithValue("@DiscountPrice", (object?)request.DiscountPrice ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@CostPrice", (object?)request.CostPrice ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@TaxPercentage", (object?)request.TaxPercentage ?? DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@DiscountPrice",
+                            (object?)request.DiscountPrice ?? DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@CostPrice",
+                            (object?)request.CostPrice ?? DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@TaxPercentage",
+                            (object?)request.TaxPercentage ?? DBNull.Value);
 
                         cmd.Parameters.AddWithValue("@StockQuantity", request.StockQuantity);
-                        cmd.Parameters.AddWithValue("@MinStockQuantity", (object?)request.MinStockQuantity ?? DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@MinStockQuantity",
+                            (object?)request.MinStockQuantity ?? DBNull.Value);
+
                         cmd.Parameters.AddWithValue("@TrackInventory", request.TrackInventory);
 
-                        cmd.Parameters.AddWithValue("@MainImage", (object?)request.MainImage ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@MainImage",
+                            (object?)mainImagePath ?? DBNull.Value);
 
                         cmd.Parameters.AddWithValue("@GalleryImages",
-                            request.GalleryImages != null && request.GalleryImages.Any()
-                                ? request.GalleryImages.ToArray()
-                                : DBNull.Value);
+                            galleryPaths.Any() ? galleryPaths.ToArray() : DBNull.Value);
 
-                        cmd.Parameters.AddWithValue("@Weight", (object?)request.Weight ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@Length", (object?)request.Length ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@Width", (object?)request.Width ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@Height", (object?)request.Height ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@Weight",
+                            (object?)request.Weight ?? DBNull.Value);
 
-                        cmd.Parameters.AddWithValue("@MetaTitle", (object?)request.MetaTitle ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@MetaDescription", (object?)request.MetaDescription ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@MetaKeywords", (object?)request.MetaKeywords ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@Length",
+                            (object?)request.Length ?? DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@Width",
+                            (object?)request.Width ?? DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@Height",
+                            (object?)request.Height ?? DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@MetaTitle",
+                            (object?)request.MetaTitle ?? DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@MetaDescription",
+                            (object?)request.MetaDescription ?? DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@MetaKeywords",
+                            (object?)request.MetaKeywords ?? DBNull.Value);
 
                         cmd.Parameters.AddWithValue("@IsActive", request.IsActive);
                         cmd.Parameters.AddWithValue("@IsFeatured", request.IsFeatured);
@@ -411,7 +711,144 @@ namespace elemechWisetrack.DataBaseLayer
                 return new
                 {
                     success = false,
-                    message = "Error while updating product",
+                    message = ex.Message
+                };
+            }
+        }
+
+        public async Task<object> DeleteProduct(Guid productId)
+        {
+            try
+            {
+                using (var conn = new NpgsqlConnection(DbConnection))
+                {
+                    await conn.OpenAsync();
+
+                    string query = @"
+            UPDATE products
+            SET IsDeleted = TRUE
+            WHERE Id = @Id";
+
+                    using (var cmd = new NpgsqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@Id", productId);
+
+                        int rowsAffected = await cmd.ExecuteNonQueryAsync();
+
+                        if (rowsAffected == 0)
+                        {
+                            return new
+                            {
+                                success = false,
+                                message = "Product not found"
+                            };
+                        }
+
+                        return new
+                        {
+                            success = true,
+                            message = "Product deleted successfully"
+                        };
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return new
+                {
+                    success = false,
+                    message = "Error while deleting product",
+                    error = ex.Message
+                };
+            }
+        }
+
+        public async Task<object> RestoreProduct(Guid productId)
+        {
+            try
+            {
+                using (var conn = new NpgsqlConnection(DbConnection))
+                {
+                    await conn.OpenAsync();
+
+                    string query = @"
+            UPDATE products
+            SET IsDeleted = FALSE
+            WHERE Id = @Id";
+
+                    using (var cmd = new NpgsqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@Id", productId);
+
+                        int rowsAffected = await cmd.ExecuteNonQueryAsync();
+
+                        if (rowsAffected == 0)
+                        {
+                            return new
+                            {
+                                success = false,
+                                message = "Product not found"
+                            };
+                        }
+
+                        return new
+                        {
+                            success = true,
+                            message = "Product restored successfully"
+                        };
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return new
+                {
+                    success = false,
+                    message = "Error while restoring product",
+                    error = ex.Message
+                };
+            }
+        }
+
+        public async Task<object> PermanentDeleteProduct(Guid productId)
+        {
+            try
+            {
+                using (var conn = new NpgsqlConnection(DbConnection))
+                {
+                    await conn.OpenAsync();
+
+                    string query = @"DELETE FROM products WHERE Id = @Id";
+
+                    using (var cmd = new NpgsqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@Id", productId);
+
+                        int rowsAffected = await cmd.ExecuteNonQueryAsync();
+
+                        if (rowsAffected == 0)
+                        {
+                            return new
+                            {
+                                success = false,
+                                message = "Product not found"
+                            };
+                        }
+
+                        return new
+                        {
+                            success = true,
+                            message = "Product permanently deleted"
+                        };
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return new
+                {
+                    success = false,
+                    message = "Error while deleting product permanently",
                     error = ex.Message
                 };
             }

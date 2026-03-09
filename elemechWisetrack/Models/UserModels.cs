@@ -57,10 +57,10 @@ namespace elemechWisetrack.Models
         public int? MinStockQuantity { get; set; }
         public bool TrackInventory { get; set; } = true;
 
-        // Product Images
-        public string? MainImage { get; set; }
-        //public List<string>? GalleryImages { get; set; }
-        public List<string> GalleryImages { get; set; }
+        // ✅ Product Images (FILE UPLOAD)
+        public IFormFile? MainImage { get; set; }
+
+        public List<IFormFile>? GalleryImages { get; set; }
 
         // Physical Details
         public decimal? Weight { get; set; }
@@ -77,9 +77,6 @@ namespace elemechWisetrack.Models
         public bool IsActive { get; set; } = true;
         public bool IsFeatured { get; set; } = false;
         public bool IsDeleted { get; set; } = false;
-
-        // Audit Fields
-        //public Guid CreatedBy { get; set; }
     }
 
     public class BrandInsertModel

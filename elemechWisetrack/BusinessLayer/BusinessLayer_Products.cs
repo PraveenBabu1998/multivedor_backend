@@ -7,12 +7,18 @@ namespace elemechWisetrack.BusinessLayer
 {
     public interface IBusinessLayer_Products
     {
-        Task<object> AddSingleProduct(string userEmail, [FromBody] ProductInsertModel request);
+        Task<object> AddSingleProduct(string userEmail, ProductInsertModel request);
         Task<object> GetAllProducts(int? page, int? pageSize);
+        Task<object> GetAllProductsOfAdmin(string userEmail, int? page, int? pageSize);
         Task<object> UpdateProduct(
     Guid productId,
     string userEmail,
     ProductInsertModel request);
+
+        Task<object> DeleteProduct(Guid productId);
+        Task<object> RestoreProduct(Guid productId);
+        Task<object> PermanentDeleteProduct(Guid productId);
+
     }
 
     public partial interface IBusinessLayer : IBusinessLayer_Products
@@ -22,40 +28,34 @@ namespace elemechWisetrack.BusinessLayer
 
     public partial class BusinessLayer
     {
-        public async Task<object> AddSingleProduct(string userEmail, [FromBody] ProductInsertModel request)
+        public async Task<object> AddSingleProduct(string userEmail, ProductInsertModel request)
         {
             if (string.IsNullOrEmpty(request.Name))
-            {
                 return "Product Name is required";
-            }
 
             if (request.CategoryId == Guid.Empty)
-            {
-                // CategoryId is empty (00000000-0000-0000-0000-000000000000)
                 return "Category id is required";
-            }
 
             if (request.BrandId == Guid.Empty)
-            {
                 return "Brand is required";
-            }
 
             if (request.Price <= 0)
-            {
                 return "Price is required";
-            }
 
             string baseSlug = GenerateSlugProduct(request.Name);
 
             return await _dataBaseLayer.AddSingleProduct(userEmail, request, baseSlug);
-        
-        
-        
         }
+        
 
         public async Task<object> GetAllProducts(int? page, int? pageSize)
         {
             return await _dataBaseLayer.GetAllProducts(page, pageSize);
+        }
+
+        public async Task<object> GetAllProductsOfAdmin(string userEmail, int? page, int? pageSize)
+        {
+            return await _dataBaseLayer.GetAllProductsOfAdmin(userEmail,page, pageSize);
         }
 
         public async Task<object> UpdateProduct(
@@ -63,8 +63,31 @@ namespace elemechWisetrack.BusinessLayer
     string userEmail,
     ProductInsertModel request)
         {
+            
+            // Generate slug
             string baseSlug = GenerateSlugProduct(request.Name);
-            return await _dataBaseLayer.UpdateProduct(productId, userEmail, request, baseSlug);
+
+            return await _dataBaseLayer.UpdateProduct(
+                productId,
+                userEmail,
+                request,
+                baseSlug);
+        }
+
+        public async Task<object> DeleteProduct(Guid productId)
+        {
+            return await _dataBaseLayer.DeleteProduct(productId);
+        }
+
+        public async Task<object> RestoreProduct(Guid productId)
+        {
+            return await _dataBaseLayer.RestoreProduct(productId);
+        }
+
+        public async Task<object> PermanentDeleteProduct(Guid productId)
+        {
+
+            return await _dataBaseLayer.PermanentDeleteProduct(productId);
         }
 
         public string GenerateSlugProduct(string name)

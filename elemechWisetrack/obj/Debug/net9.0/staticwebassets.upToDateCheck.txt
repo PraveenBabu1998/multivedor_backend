@@ -61,18 +61,24 @@ wwwroot\lib\jquery\dist\jquery.slim.js
 wwwroot\lib\jquery\dist\jquery.slim.min.js
 wwwroot\lib\jquery\dist\jquery.slim.min.map
 wwwroot\lib\jquery\LICENSE.txt
-wwwroot\uploads\categories\b36ab3ad-e860-4a08-9080-799bead19f7d_safa 2.png
-wwwroot\uploads\categories\f139ef26-1090-40c7-8de6-5d059cb4b8e0_safa 2.png
+wwwroot\uploads\categories\3ce74d98-fc1d-4071-a3a4-6670f4aeedd6_TRACKWIZE - LOGO.png
+wwwroot\uploads\categories\57397f56-72ea-4f30-a26e-0c8a66bd3dd8_TRACKWIZE - LOGO.png
 wwwroot\uploads\categories\66b444de-ebb4-4bb9-b1a0-5ef3102e8835_TRACKWIZE - LOGO.png
-wwwroot\uploads\categories\df2076df-7742-42a3-9e8c-228e6f2c18b1_TRACKWIZE - LOGO.png
-wwwroot\uploads\categories\fc5e00fd-2d85-4c3a-8ab8-4bbbdb718883_TRACKWIZE - LOGO.png
+wwwroot\uploads\categories\788f3b08-cc54-4a9a-920c-0803f366ac2a_TRACKWIZE - LOGO.png
 wwwroot\uploads\categories\81107aeb-19fd-426d-9a1c-e0bc88faca7d_TRACKWIZE - LOGO.png
 wwwroot\uploads\categories\9d439b1d-54b7-4e07-a8a1-6b2fa8bfd135_TRACKWIZE - LOGO.png
+wwwroot\uploads\categories\b36ab3ad-e860-4a08-9080-799bead19f7d_safa 2.png
+wwwroot\uploads\categories\df2076df-7742-42a3-9e8c-228e6f2c18b1_TRACKWIZE - LOGO.png
 wwwroot\uploads\categories\f0bbbf40-509f-4be5-86c2-9fd8559d7518_TRACKWIZE - LOGO.png
-wwwroot\uploads\categories\788f3b08-cc54-4a9a-920c-0803f366ac2a_TRACKWIZE - LOGO.png
-wwwroot\uploads\categories\57397f56-72ea-4f30-a26e-0c8a66bd3dd8_TRACKWIZE - LOGO.png
+wwwroot\uploads\categories\f139ef26-1090-40c7-8de6-5d059cb4b8e0_safa 2.png
+wwwroot\uploads\categories\fc5e00fd-2d85-4c3a-8ab8-4bbbdb718883_TRACKWIZE - LOGO.png
 wwwroot\uploads\categories\ff1a1cc8-2577-41ed-9393-8f641d971971_TRACKWIZE - LOGO.png
-wwwroot\uploads\categories\3ce74d98-fc1d-4071-a3a4-6670f4aeedd6_TRACKWIZE - LOGO.png
+wwwroot\uploads\products\0689e0f8-5589-4ac8-9148-166db5cce0f6.png
+wwwroot\uploads\products\1a9d523e-ee9c-4d1e-a72d-ba73bfbc1222.png
+wwwroot\uploads\products\4cd6fbbe-b530-4fa6-9a67-e08357899fe8.png
+wwwroot\uploads\products\5e00e443-8649-4a9b-a78f-0e98c8f6b6ed.png
+wwwroot\uploads\products\b04d3ac1-51b3-43a8-9c8f-21c57f79f1ad.png
+wwwroot\uploads\products\b051e42c-1771-480d-86f7-1e8c626890e7.png
 C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\css\site.css
 C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\favicon.ico
 C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\js\site.js
