@@ -259,8 +259,40 @@
   },
   {
     "ContainingType": "elemechWisetrack.Controllers.ColorsController",
+    "Method": "Add",
+    "RelativePath": "api/colors/add",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "elemechWisetrack.Models.ProductColorRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.ColorsController",
     "Method": "DeleteColor",
     "RelativePath": "api/colors/delete-color/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.ColorsController",
+    "Method": "Delete",
+    "RelativePath": "api/colors/delete/{id}",
     "HttpMethod": "DELETE",
     "IsController": true,
     "Order": 0,
@@ -285,6 +317,16 @@
   },
   {
     "ContainingType": "elemechWisetrack.Controllers.ColorsController",
+    "Method": "Get",
+    "RelativePath": "api/colors/get-product-color",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.ColorsController",
     "Method": "AddColors",
     "RelativePath": "api/colors/insert",
     "HttpMethod": "POST",
@@ -294,6 +336,22 @@
       {
         "Name": "request",
         "Type": "elemechWisetrack.Models.ProductsCollors",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.ColorsController",
+    "Method": "GetByProduct",
+    "RelativePath": "api/colors/product/{productId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "productId",
+        "Type": "System.Guid",
         "IsRequired": true
       }
     ],
@@ -363,6 +421,27 @@
       {
         "Name": "request",
         "Type": "elemechWisetrack.Models.ProductsCollors",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.ColorsController",
+    "Method": "Update",
+    "RelativePath": "api/colors/update/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Guid",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "elemechWisetrack.Models.ProductColorRequest",
         "IsRequired": true
       }
     ],
@@ -464,6 +543,196 @@
     "IsController": true,
     "Order": 0,
     "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.SizeController",
+    "Method": "AddSize",
+    "RelativePath": "api/size/add",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "elemechWisetrack.Models.ProductSizes",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.SizeController",
+    "Method": "AddProductSize",
+    "RelativePath": "api/size/add-product-size",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "elemechWisetrack.Models.ProductSizeRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.SizeController",
+    "Method": "DeleteProductSize",
+    "RelativePath": "api/size/delete-product-size/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.SizeController",
+    "Method": "DeleteSizePermanent",
+    "RelativePath": "api/size/delete-size-permanent/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.SizeController",
+    "Method": "DeleteSize",
+    "RelativePath": "api/size/delete/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.SizeController",
+    "Method": "GetSizes",
+    "RelativePath": "api/size/get",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.SizeController",
+    "Method": "GetSizeByProduct",
+    "RelativePath": "api/size/get-product-size/{productId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "productId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.SizeController",
+    "Method": "GetProductSizes",
+    "RelativePath": "api/size/get-product-sizes",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.SizeController",
+    "Method": "RestoreSize",
+    "RelativePath": "api/size/restore/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.SizeController",
+    "Method": "ToggleSize",
+    "RelativePath": "api/size/toggle/{id}",
+    "HttpMethod": "PATCH",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.SizeController",
+    "Method": "UpdateProductSize",
+    "RelativePath": "api/size/update-product-size/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Guid",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "elemechWisetrack.Models.ProductSizeRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.SizeController",
+    "Method": "UpdateSize",
+    "RelativePath": "api/size/update/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Guid",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "elemechWisetrack.Models.ProductSizes",
+        "IsRequired": true
+      }
+    ],
     "ReturnTypes": []
   },
   {

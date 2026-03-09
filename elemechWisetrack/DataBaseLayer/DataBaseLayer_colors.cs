@@ -13,6 +13,11 @@ namespace elemechWisetrack.DataBaseLayer
         Task<object> SoftDeleteColor(Guid id);
         Task<object> RestoreColor(Guid id);
         Task<object> DeleteColor(Guid id);
+        Task<object> AddProductColor(ProductColorRequest request);
+        Task<object> GetProductColors();
+        Task<object> GetColorByProduct(Guid productId);
+        Task<object> UpdateProductColor(Guid id, ProductColorRequest request);
+        Task<object> DeleteProductColor(Guid id);
     }
 
     public partial interface IDataBaseLayer : IDataBaseLayer_colors
@@ -296,6 +301,174 @@ namespace elemechWisetrack.DataBaseLayer
                 success = false,
                 message = "Color not found"
             };
+        }
+        public async Task<object> AddProductColor(ProductColorRequest request)
+        {
+            using (var con = new NpgsqlConnection(DbConnection))
+            {
+                await con.OpenAsync();
+
+                // Check color exists
+                string checkColor = "SELECT COUNT(1) FROM colors WHERE id=@ColorId";
+
+                using (var checkCmd = new NpgsqlCommand(checkColor, con))
+                {
+                    checkCmd.Parameters.AddWithValue("@ColorId", request.ColorId);
+
+                    var exists = (long)await checkCmd.ExecuteScalarAsync();
+
+                    if (exists == 0)
+                    {
+                        return new
+                        {
+                            success = false,
+                            message = "ColorId does not exist"
+                        };
+                    }
+                }
+
+                string query = @"INSERT INTO product_colors
+                        (ProductId, ColorId)
+                        VALUES (@ProductId, @ColorId)
+                        RETURNING Id";
+
+                using (var cmd = new NpgsqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@ProductId", request.ProductId);
+                    cmd.Parameters.AddWithValue("@ColorId", request.ColorId);
+
+                    var id = await cmd.ExecuteScalarAsync();
+
+                    return new
+                    {
+                        success = true,
+                        message = "Product color added",
+                        id
+                    };
+                }
+            }
+        }
+
+        public async Task<object> GetProductColors()
+        {
+            using (var con = new NpgsqlConnection(DbConnection))
+            {
+                await con.OpenAsync();
+
+                string query = @"SELECT 
+                        pc.id,
+                        p.name AS product_name,
+                        c.name AS color_name
+                        FROM product_colors pc
+                        JOIN products p ON pc.productid = p.id
+                        JOIN colors c ON pc.colorid = c.id";
+
+                using (var cmd = new NpgsqlCommand(query, con))
+                using (var reader = await cmd.ExecuteReaderAsync())
+                {
+                    var list = new List<object>();
+
+                    while (await reader.ReadAsync())
+                    {
+                        list.Add(new
+                        {
+                            id = reader["id"],
+                            product = reader["product_name"],
+                            color = reader["color_name"]
+                        });
+                    }
+
+                    return new { success = true, data = list };
+                }
+            }
+        }
+
+        public async Task<object> GetColorByProduct(Guid productId)
+        {
+            using (var con = new NpgsqlConnection(DbConnection))
+            {
+                await con.OpenAsync();
+
+                string query = @"SELECT 
+                        pc.id,
+                        c.name,
+                        c.hexcode
+                        FROM product_colors pc
+                        JOIN colors c ON pc.colorid = c.id
+                        WHERE pc.productid = @ProductId";
+
+                using (var cmd = new NpgsqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@ProductId", productId);
+
+                    using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        var list = new List<object>();
+
+                        while (await reader.ReadAsync())
+                        {
+                            list.Add(new
+                            {
+                                id = reader["id"],
+                                name = reader["name"],
+                                hexcode = reader["hexcode"]
+                            });
+                        }
+
+                        return new { success = true, data = list };
+                    }
+                }
+            }
+        }
+
+        public async Task<object> UpdateProductColor(Guid id, ProductColorRequest request)
+        {
+            using (var con = new NpgsqlConnection(DbConnection))
+            {
+                await con.OpenAsync();
+
+                string query = @"UPDATE product_colors
+                         SET ProductId=@ProductId,
+                             ColorId=@ColorId
+                         WHERE Id=@Id";
+
+                using (var cmd = new NpgsqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@Id", id);
+                    cmd.Parameters.AddWithValue("@ProductId", request.ProductId);
+                    cmd.Parameters.AddWithValue("@ColorId", request.ColorId);
+
+                    await cmd.ExecuteNonQueryAsync();
+
+                    return new
+                    {
+                        success = true,
+                        message = "Product color updated"
+                    };
+                }
+            }
+        }
+
+        public async Task<object> DeleteProductColor(Guid id)
+        {
+            using (var con = new NpgsqlConnection(DbConnection))
+            {
+                await con.OpenAsync();
+
+                string query = @"DELETE FROM product_colors WHERE Id=@Id";
+
+                using (var cmd = new NpgsqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@Id", id);
+                    await cmd.ExecuteNonQueryAsync();
+
+                    return new
+                    {
+                        success = true,
+                        message = "Product color deleted"
+                    };
+                }
+            }
         }
     }
 }

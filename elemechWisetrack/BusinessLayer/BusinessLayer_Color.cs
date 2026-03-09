@@ -14,6 +14,11 @@ namespace elemechWisetrack.BusinessLayer
         Task<object> SoftDeleteColor(Guid id);
         Task<object> RestoreColor(Guid id);
         Task<object> DeleteColor(Guid id);
+        Task<object> AddProductColor(ProductColorRequest request);
+        Task<object> GetProductColors();
+        Task<object> GetColorByProduct(Guid productId);
+        Task<object> UpdateProductColor(Guid id, ProductColorRequest request);
+        Task<object> DeleteProductColor(Guid id);
     }
     public partial interface IBusinessLayer : IBusinessLayer_Color
     {
@@ -56,6 +61,31 @@ namespace elemechWisetrack.BusinessLayer
         public async Task<object> DeleteColor(Guid id)
         {
             return await _dataBaseLayer.DeleteColor(id);
+        }
+
+        public async Task<object> AddProductColor(ProductColorRequest request)
+        {
+            return await _dataBaseLayer.AddProductColor(request);
+        }
+
+        public async Task<object> GetProductColors()
+        {
+            return await _dataBaseLayer.GetProductColors();
+        }
+
+        public async Task<object> GetColorByProduct(Guid productId)
+        {
+            return await _dataBaseLayer.GetColorByProduct(productId);
+        }
+
+        public async Task<object> UpdateProductColor(Guid id, ProductColorRequest request)
+        {
+            return await _dataBaseLayer.UpdateProductColor(id, request);
+        }
+
+        public async Task<object> DeleteProductColor(Guid id)
+        {
+            return await _dataBaseLayer.DeleteProductColor(id);
         }
 
     }

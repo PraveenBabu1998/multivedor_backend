@@ -119,6 +119,25 @@ namespace elemechWisetrack.Models
         public DateTime CreatedDate { get; set; }
     }
 
-    
+    public class ProductSizes
+    {
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public bool IsActive { get; set; }
+        public bool IsDeleted { get; set; }
+    }
+
+    public class ProductSizeRequest
+    {
+        public Guid ProductId { get; set; }
+        public Guid SizeId { get; set; }
+    }
+
+    public class ProductColorRequest
+    {
+        public Guid ProductId { get; set; }
+        public Guid ColorId { get; set; }
+    }
+
 
 }
