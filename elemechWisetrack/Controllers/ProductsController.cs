@@ -107,5 +107,30 @@ namespace elemechWisetrack.Controllers
             return Ok(result);
         }
 
+        [HttpPost("upload-excel")]
+        public async Task<IActionResult> UploadProductsExcel(IFormFile file)
+        {
+            string userEmail = User.FindFirst(ClaimTypes.Email)?.Value??
+                User.FindFirst("email")?.Value??
+                User.FindFirst("userName")?.Value;
+            if (file == null || file.Length == 0)
+                return BadRequest("File is required");
+
+            // Get file extension
+            var extension = Path.GetExtension(file.FileName).ToLower();
+
+            // Allowed Excel extensions
+            string[] allowedExtensions = { ".xls", ".xlsx", ".csv" };
+
+            if (!allowedExtensions.Contains(extension))
+            {
+                return BadRequest("Invalid file format. Only .xls and .xlsx files are allowed.");
+            }
+
+            var result =await _businessLayer.UploadProductsExcel(file,userEmail);
+
+            return Ok(new {Success = false,Message = "Excel file is valid", result });
+        }
+
     }
 }

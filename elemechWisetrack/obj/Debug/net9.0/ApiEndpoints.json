@@ -855,6 +855,22 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "elemechWisetrack.Controllers.ProductsController",
+    "Method": "UploadProductsExcel",
+    "RelativePath": "api/products/upload-excel",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "file",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "elemechWisetrack.Controllers.AuthController",
     "Method": "ConfirmResetPassword",
     "RelativePath": "api/resetpassword",

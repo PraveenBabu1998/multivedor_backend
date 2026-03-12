@@ -1,4 +1,5 @@
 ﻿using elemechWisetrack.Models;
+using elemechWisetrack.others;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.RegularExpressions;
@@ -18,6 +19,7 @@ namespace elemechWisetrack.BusinessLayer
         Task<object> DeleteProduct(Guid productId);
         Task<object> RestoreProduct(Guid productId);
         Task<object> PermanentDeleteProduct(Guid productId);
+        Task<object> UploadProductsExcel(IFormFile file,string userEmail);
 
     }
 
@@ -88,6 +90,22 @@ namespace elemechWisetrack.BusinessLayer
         {
 
             return await _dataBaseLayer.PermanentDeleteProduct(productId);
+        }
+
+        public async Task<object> UploadProductsExcel(IFormFile file, string userEmail)
+        {
+            var dataCellB = ExcelReader.ReadColumnB(file);
+            var dataCellG = ExcelReader.ReadColumnG(file);
+            //var dataCellV = ExcelReader.ReadColumnV(file);
+            var readExceldata = ExcelReader.ReadExcelData(file);
+
+            var insertCategoryCellB = await _dataBaseLayer.InsertExcelFileCategory(dataCellB);
+            var insetBarndsCellG = await _dataBaseLayer.InsertExcelFileBrands(dataCellG);
+            var insertColorCellG = await _dataBaseLayer.InsertExcelFileColors(dataCellG);
+            var insertSizeCellG = await _dataBaseLayer.InsertExcelFileSize(dataCellG);
+            var insertProductsData = await _dataBaseLayer.InsertExcelFileProducts(readExceldata, userEmail);
+
+            return insertProductsData;
         }
 
         public string GenerateSlugProduct(string name)

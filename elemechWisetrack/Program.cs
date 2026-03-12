@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-
+using OfficeOpenXml;
 using elemechWisetrack.Data;
 using elemechWisetrack.Areas.Identity.Data;
 using elemechWisetrack.BusinessLayer;
@@ -31,6 +31,9 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders()
 .AddDefaultUI();
+// Excel reader package
+
+ExcelPackage.License.SetNonCommercialPersonal("Praveen Babu");
 
 // ======================================================
 // 3️⃣ JWT Authentication (FIXED)

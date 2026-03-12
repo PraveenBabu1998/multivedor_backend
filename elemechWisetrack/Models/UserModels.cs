@@ -136,5 +136,37 @@ namespace elemechWisetrack.Models
         public Guid ColorId { get; set; }
     }
 
+    public class ExcelProductRow
+    {
+        public string B { get; set; }
+        public string E { get; set; }
+        public string G { get; set; }
+        public string H { get; set; }
+        public string I { get; set; }
+        public string M { get; set; }
+        public string P { get; set; }
+        public string Q { get; set; }
+        public string T { get; set; }
+        public string U { get; set; }
+        public string V { get; set; }
+        public string W { get; set; }
+        public string X { get; set; }
+        public string Y { get; set; }
+        public string AA { get; set; }
+    }
+
+    public class ExcelProductsRow
+    {
+        public string Name { get; set; }
+        public string Category { get; set; }
+        public string Brand { get; set; }
+        public string ShortDescription { get; set; }
+        public string Description { get; set; }
+        public decimal Price { get; set; }
+        public string SKU { get; set; }
+        public string Images { get; set; }   // image1.jpg,image2.jpg,image3.jpg
+        public string ProductCode { get; set; }
+        public string Specification { get; set; }
+    }
 
 }
