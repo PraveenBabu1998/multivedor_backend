@@ -247,7 +247,6 @@ namespace elemechWisetrack.DataBaseLayer
         {
             try
             {
-                // Default values
                 int basePage = (page.HasValue && page.Value > 0) ? page.Value : 1;
                 int basePageSize = (pageSize.HasValue && pageSize.Value > 0) ? pageSize.Value : 100;
 
@@ -257,7 +256,7 @@ namespace elemechWisetrack.DataBaseLayer
 
                     int offset = (basePage - 1) * basePageSize;
 
-                    // Total Count
+                    // TOTAL COUNT
                     string countQuery = @"SELECT COUNT(*) 
                                   FROM products 
                                   WHERE IsDeleted = FALSE;";
@@ -268,12 +267,17 @@ namespace elemechWisetrack.DataBaseLayer
                         totalRecords = Convert.ToInt32(await countCmd.ExecuteScalarAsync());
                     }
 
-                    // Get Products
+                    // PRODUCT QUERY WITH JOIN
                     string getQuery = @"
-                SELECT *
-                FROM products
-                WHERE IsDeleted = FALSE
-                ORDER BY CreatedDate DESC
+                SELECT 
+                    p.*,
+                    c.Name AS CategoryName,
+                    b.Name AS BrandName
+                FROM products p
+                LEFT JOIN categories c ON p.CategoryId = c.Id
+                LEFT JOIN brands b ON p.BrandId = b.Id
+                WHERE p.IsDeleted = FALSE
+                ORDER BY p.CreatedDate DESC
                 LIMIT @pageSize OFFSET @offset;";
 
                     var products = new List<object>();
@@ -296,8 +300,12 @@ namespace elemechWisetrack.DataBaseLayer
                                     Description = reader["Description"]?.ToString(),
 
                                     CategoryId = reader["CategoryId"],
+                                    CategoryName = reader["CategoryName"]?.ToString(),
+
                                     SubCategoryId = reader["SubCategoryId"] == DBNull.Value ? null : reader["SubCategoryId"],
+
                                     BrandId = reader["BrandId"] == DBNull.Value ? null : reader["BrandId"],
+                                    BrandName = reader["BrandName"]?.ToString(),
 
                                     Price = reader["Price"],
                                     DiscountPrice = reader["DiscountPrice"] == DBNull.Value ? null : reader["DiscountPrice"],
@@ -311,8 +319,8 @@ namespace elemechWisetrack.DataBaseLayer
 
                                     MainImage = reader["MainImage"]?.ToString(),
                                     GalleryImages = reader["GalleryImages"] == DBNull.Value
-                                                        ? new string[] { }
-                                                        : (string[])reader["GalleryImages"],
+                                        ? new string[] { }
+                                        : (string[])reader["GalleryImages"],
 
                                     Weight = reader["Weight"] == DBNull.Value ? null : reader["Weight"],
                                     Length = reader["Length"] == DBNull.Value ? null : reader["Length"],
