@@ -169,4 +169,16 @@ namespace elemechWisetrack.Models
         public string Specification { get; set; }
     }
 
+    public class AddBlogDto
+    {
+        public string Title { get; set; }
+        public string Description { get; set; }
+        public string Content { get; set; }
+        public IFormFile? Image { get; set; }
+        public string MetaTitle { get; set; }
+        public string MetaDescription { get; set; }
+        public List<string> Tags { get; set; }
+        public string Status { get; set; }
+    }
+
 }

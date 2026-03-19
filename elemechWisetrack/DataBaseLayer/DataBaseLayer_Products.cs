@@ -256,10 +256,11 @@ namespace elemechWisetrack.DataBaseLayer
 
                     int offset = (basePage - 1) * basePageSize;
 
-                    // TOTAL COUNT
-                    string countQuery = @"SELECT COUNT(*) 
-                                  FROM products 
-                                  WHERE IsDeleted = FALSE;";
+                    // ✅ TOTAL COUNT
+                    string countQuery = @"
+                SELECT COUNT(*)
+                FROM products
+                WHERE isdeleted = FALSE;";
 
                     int totalRecords;
                     using (var countCmd = new NpgsqlCommand(countQuery, conn))
@@ -267,18 +268,44 @@ namespace elemechWisetrack.DataBaseLayer
                         totalRecords = Convert.ToInt32(await countCmd.ExecuteScalarAsync());
                     }
 
-                    // PRODUCT QUERY WITH JOIN
+                    // ✅ MAIN QUERY (WITH COLORS + SIZES)
                     string getQuery = @"
-                SELECT 
-                    p.*,
-                    c.Name AS CategoryName,
-                    b.Name AS BrandName
-                FROM products p
-                LEFT JOIN categories c ON p.CategoryId = c.Id
-                LEFT JOIN brands b ON p.BrandId = b.Id
-                WHERE p.IsDeleted = FALSE
-                ORDER BY p.CreatedDate DESC
-                LIMIT @pageSize OFFSET @offset;";
+SELECT p.*, 
+       c.name AS category_name,
+       sc.name AS subcategory_name,
+       b.name AS brand_name,
+
+       -- ✅ Colors
+       COALESCE(
+           ARRAY_AGG(DISTINCT col.name) 
+           FILTER (WHERE col.id IS NOT NULL), '{}'
+       ) AS colors,
+
+       -- ✅ Sizes
+       COALESCE(
+           ARRAY_AGG(DISTINCT s.name) 
+           FILTER (WHERE s.id IS NOT NULL), '{}'
+       ) AS sizes
+
+FROM products p
+
+LEFT JOIN categories c ON p.categoryid = c.id
+LEFT JOIN categories sc ON p.subcategoryid = sc.id
+LEFT JOIN brands b ON p.brandid = b.id
+
+LEFT JOIN product_colors pc ON p.id = pc.productid
+LEFT JOIN colors col ON pc.colorid = col.id
+
+LEFT JOIN product_sizes ps ON p.id = ps.product_id
+LEFT JOIN sizes s ON ps.size_id = s.id
+
+WHERE p.isdeleted = FALSE
+
+GROUP BY p.id, c.name, sc.name, b.name
+
+ORDER BY p.createddate DESC
+LIMIT @pageSize OFFSET @offset;
+";
 
                     var products = new List<object>();
 
@@ -293,19 +320,29 @@ namespace elemechWisetrack.DataBaseLayer
                             {
                                 products.Add(new
                                 {
-                                    Id = reader["Id"],
+                                    Id = reader.GetGuid(reader.GetOrdinal("Id")),
                                     Name = reader["Name"]?.ToString(),
                                     Slug = reader["Slug"]?.ToString(),
                                     ShortDescription = reader["ShortDescription"]?.ToString(),
                                     Description = reader["Description"]?.ToString(),
 
                                     CategoryId = reader["CategoryId"],
-                                    CategoryName = reader["CategoryName"]?.ToString(),
-
                                     SubCategoryId = reader["SubCategoryId"] == DBNull.Value ? null : reader["SubCategoryId"],
-
                                     BrandId = reader["BrandId"] == DBNull.Value ? null : reader["BrandId"],
-                                    BrandName = reader["BrandName"]?.ToString(),
+
+                                    // ✅ Names
+                                    CategoryName = reader["category_name"] == DBNull.Value ? null : reader["category_name"].ToString(),
+                                    SubCategoryName = reader["subcategory_name"] == DBNull.Value ? null : reader["subcategory_name"].ToString(),
+                                    BrandName = reader["brand_name"] == DBNull.Value ? null : reader["brand_name"].ToString(),
+
+                                    // ✅ Colors & Sizes
+                                    Colors = reader["colors"] == DBNull.Value
+                                        ? new string[] { }
+                                        : (string[])reader["colors"],
+
+                                    Sizes = reader["sizes"] == DBNull.Value
+                                        ? new string[] { }
+                                        : (string[])reader["sizes"],
 
                                     Price = reader["Price"],
                                     DiscountPrice = reader["DiscountPrice"] == DBNull.Value ? null : reader["DiscountPrice"],
@@ -313,11 +350,13 @@ namespace elemechWisetrack.DataBaseLayer
                                     TaxPercentage = reader["TaxPercentage"] == DBNull.Value ? null : reader["TaxPercentage"],
 
                                     SKU = reader["SKU"]?.ToString(),
+
                                     StockQuantity = reader["StockQuantity"],
                                     MinStockQuantity = reader["MinStockQuantity"] == DBNull.Value ? null : reader["MinStockQuantity"],
                                     TrackInventory = reader["TrackInventory"],
 
                                     MainImage = reader["MainImage"]?.ToString(),
+
                                     GalleryImages = reader["GalleryImages"] == DBNull.Value
                                         ? new string[] { }
                                         : (string[])reader["GalleryImages"],
@@ -375,38 +414,38 @@ namespace elemechWisetrack.DataBaseLayer
                 {
                     await conn.OpenAsync();
 
-                    // Get UserId
+                    // ✅ STEP 1: Get UserId
                     string userQuery = @"SELECT ""Id"" FROM ""AspNetUsers"" WHERE ""Email"" = @Email LIMIT 1";
 
                     Guid userId;
 
                     using (var userCmd = new NpgsqlCommand(userQuery, conn))
                     {
+                        if (string.IsNullOrEmpty(userEmail))
+                        {
+                            return new { success = false, message = "User email is missing" };
+                        }
+
                         userCmd.Parameters.AddWithValue("@Email", userEmail);
 
                         var result = await userCmd.ExecuteScalarAsync();
 
                         if (result == null)
                         {
-                            return new
-                            {
-                                success = false,
-                                message = "User not found"
-                            };
+                            return new { success = false, message = "User not found" };
                         }
 
-                        // convert string to Guid
                         userId = Guid.Parse(result.ToString());
                     }
 
                     int offset = (basePage - 1) * basePageSize;
 
-                    // Total count
+                    // ✅ STEP 2: Total count
                     string countQuery = @"
-            SELECT COUNT(*)
-            FROM products
-            WHERE IsDeleted = FALSE
-            AND CreatedBy = @UserId;";
+                SELECT COUNT(*)
+                FROM products
+                WHERE isdeleted = FALSE
+                AND createdby = @UserId;";
 
                     int totalRecords;
 
@@ -416,14 +455,45 @@ namespace elemechWisetrack.DataBaseLayer
                         totalRecords = Convert.ToInt32(await countCmd.ExecuteScalarAsync());
                     }
 
-                    // Get products
+                    // ✅ STEP 3: MAIN QUERY (JOIN + COLORS + SIZES)
                     string getQuery = @"
-            SELECT *
-            FROM products
-            WHERE IsDeleted = FALSE
-            AND CreatedBy = @UserId
-            ORDER BY CreatedDate DESC
-            LIMIT @pageSize OFFSET @offset;";
+SELECT p.*, 
+       c.name AS category_name,
+       sc.name AS subcategory_name,
+       b.name AS brand_name,
+
+       -- ✅ Colors
+       COALESCE(
+           ARRAY_AGG(DISTINCT col.name) 
+           FILTER (WHERE col.id IS NOT NULL), '{}'
+       ) AS colors,
+
+       -- ✅ Sizes
+       COALESCE(
+           ARRAY_AGG(DISTINCT s.name) 
+           FILTER (WHERE s.id IS NOT NULL), '{}'
+       ) AS sizes
+
+FROM products p
+
+LEFT JOIN categories c ON p.categoryid = c.id
+LEFT JOIN categories sc ON p.subcategoryid = sc.id
+LEFT JOIN brands b ON p.brandid = b.id
+
+LEFT JOIN product_colors pc ON p.id = pc.productid
+LEFT JOIN colors col ON pc.colorid = col.id
+
+LEFT JOIN product_sizes ps ON p.id = ps.product_id
+LEFT JOIN sizes s ON ps.size_id = s.id
+
+WHERE p.isdeleted = FALSE
+AND p.createdby = @UserId
+
+GROUP BY p.id, c.name, sc.name, b.name
+
+ORDER BY p.createddate DESC
+LIMIT @pageSize OFFSET @offset;
+";
 
                     var products = new List<object>();
 
@@ -449,6 +519,20 @@ namespace elemechWisetrack.DataBaseLayer
                                     SubCategoryId = reader["SubCategoryId"] == DBNull.Value ? null : (Guid?)reader["SubCategoryId"],
                                     BrandId = reader["BrandId"] == DBNull.Value ? null : (Guid?)reader["BrandId"],
 
+                                    // ✅ Names
+                                    CategoryName = reader["category_name"] == DBNull.Value ? null : reader["category_name"].ToString(),
+                                    SubCategoryName = reader["subcategory_name"] == DBNull.Value ? null : reader["subcategory_name"].ToString(),
+                                    BrandName = reader["brand_name"] == DBNull.Value ? null : reader["brand_name"].ToString(),
+
+                                    // ✅ Colors & Sizes
+                                    Colors = reader["colors"] == DBNull.Value
+                                        ? new string[] { }
+                                        : (string[])reader["colors"],
+
+                                    Sizes = reader["sizes"] == DBNull.Value
+                                        ? new string[] { }
+                                        : (string[])reader["sizes"],
+
                                     Price = Convert.ToDecimal(reader["Price"]),
                                     DiscountPrice = reader["DiscountPrice"] == DBNull.Value ? null : (decimal?)reader["DiscountPrice"],
                                     CostPrice = reader["CostPrice"] == DBNull.Value ? null : (decimal?)reader["CostPrice"],
@@ -463,8 +547,8 @@ namespace elemechWisetrack.DataBaseLayer
                                     MainImage = reader["MainImage"]?.ToString(),
 
                                     GalleryImages = reader["GalleryImages"] == DBNull.Value
-        ? new string[] { }
-        : (string[])reader["GalleryImages"],
+                                        ? new string[] { }
+                                        : (string[])reader["GalleryImages"],
 
                                     Weight = reader["Weight"] == DBNull.Value ? null : (decimal?)reader["Weight"],
                                     Length = reader["Length"] == DBNull.Value ? null : (decimal?)reader["Length"],
