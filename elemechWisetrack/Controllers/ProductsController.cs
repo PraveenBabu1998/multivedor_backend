@@ -48,6 +48,7 @@ namespace elemechWisetrack.Controllers
 
         [Route("list")]
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAllProducts(int? page, int? pageSize)
         {
             var data = await _businessLayer.GetAllProducts(page, pageSize);

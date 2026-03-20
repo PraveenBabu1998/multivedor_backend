@@ -27,6 +27,7 @@ namespace elemechWisetrack.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetBlogs()
         {
             var result = await _businessLayer.GetBlogs();
@@ -34,6 +35,7 @@ namespace elemechWisetrack.Controllers
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetBlogById(string id)
         {
             var result = await _businessLayer.GetBlogById(id);

@@ -79,30 +79,43 @@ namespace elemechWisetrack.Models
         public bool IsDeleted { get; set; } = false;
     }
 
-    public class BrandInsertModel
-    {
-        public string Name { get; set; } = string.Empty;
+    //public class BrandInsertModel
+    //{
+    //    public string Name { get; set; } = string.Empty;
 
-        public string Slug { get; set; } = string.Empty;
+    //    public string Slug { get; set; } = string.Empty;
 
-        public string? Description { get; set; }
+    //    public string? Description { get; set; }
 
-        public string? Logo { get; set; }
+    //    public string? Logo { get; set; }
 
-        public bool IsActive { get; set; } = true;
+    //    public bool IsActive { get; set; } = true;
 
-        public Guid CreatedBy { get; set; }
-    }
+    //    public Guid CreatedBy { get; set; }
+    //}
 
     public class BrandModel
     {
         public Guid Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string Slug { get; set; } = string.Empty;
+        public string? Name { get; set; }
+        public string? Slug { get; set; }
         public string? Description { get; set; }
-        public string? Logo { get; set; }
+
+        public string? Logo { get; set; }   // ✅ string (image path)
+
         public bool IsActive { get; set; }
         public DateTime CreatedDate { get; set; }
+    }
+
+    public class BrandInsertModel
+    {
+        public string Name { get; set; }
+        public string? Description { get; set; }
+
+        // ✅ file upload
+        public IFormFile? Logo { get; set; }
+
+        public bool IsActive { get; set; }
     }
 
     public class ProductsCollors

@@ -41,6 +41,7 @@ namespace elemechWisetrack.Controllers
 
         [Route("get")]
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetColors()
         {
             try

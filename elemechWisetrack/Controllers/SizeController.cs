@@ -29,6 +29,7 @@ namespace elemechWisetrack.Controllers
         }
 
         [HttpGet("get")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetSizes()
         {
             var result = await _businessLayer.GetSizes();

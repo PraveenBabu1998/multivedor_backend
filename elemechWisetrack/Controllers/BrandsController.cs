@@ -18,113 +18,60 @@ namespace elemechWisetrack.Controllers
             _businessLayer = businessLayer;
         }
 
-        [Route("insert")]
-        [HttpPost]
-        public async Task <IActionResult> AddBrands([FromBody] BrandInsertModel request)
-        
+        [HttpPost("insert")]
+        public async Task<IActionResult> AddBrands([FromForm] BrandInsertModel request)
         {
             string userEmail =
                 User.FindFirst(ClaimTypes.Email)?.Value ??
                 User.FindFirst("email")?.Value ??
                 User.FindFirst("UserEmail")?.Value;
 
-            try
-            {
-                var data = await _businessLayer.AddBrands(userEmail,request);
-                return Ok(new
-                {
-                    Success = true,
-                    Message = "Data insert successfully",
-                    data = data
-                });
+            var data = await _businessLayer.AddBrands(userEmail, request);
 
-            }
-            catch(Exception ex)
+            return Ok(new
             {
-                return StatusCode(500, new { Success = false, Message = ex.Message });
-            }
+                Success = true,
+                Message = "Brand added successfully",
+                data
+            });
         }
 
-        [Route("list")]
-        [HttpGet]
+        [HttpGet("list")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetBrands()
         {
-            try
-            {
-                var result = await _businessLayer.GetBrands();
-                return Ok(result);
-            }
-            catch (Exception ex) 
-            { 
-                return StatusCode(500,new { Message = ex.Message });
-            }
+            var result = await _businessLayer.GetBrands();
+            return Ok(result);
         }
 
         [HttpGet("list/{id}")]
         public async Task<IActionResult> GetBrandsById(Guid id)
         {
-            if (id == Guid.Empty)
-            {
-                return BadRequest(new
-                {
-                    success = false,
-                    message = "Invalid Brand Id"
-                });
-            }
+            var brand = await _businessLayer.GetBrandById(id);
 
-            try
+            return Ok(new
             {
-                var brand = await _businessLayer.GetBrandById(id);
-
-                if (brand == null)
-                {
-                    return NotFound(new
-                    {
-                        success = false,
-                        message = "Brand not found"
-                    });
-                }
-
-                return Ok(new
-                {
-                    success = true,
-                    data = brand
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new
-                {
-                    success = false,
-                    message = ex.Message
-                });
-            }
+                success = true,
+                data = brand
+            });
         }
 
         [HttpPut("update/{id}")]
-        public async Task<IActionResult> UpdateBrandsById(Guid id, [FromBody] BrandInsertModel request)
-
+        public async Task<IActionResult> UpdateBrandsById(Guid id, [FromForm] BrandInsertModel request)
         {
             string userEmail =
                 User.FindFirst(ClaimTypes.Email)?.Value ??
                 User.FindFirst("email")?.Value ??
                 User.FindFirst("UserEmail")?.Value;
 
-            try
-            {
-                var data = await _businessLayer.UpdateBrandsById(id, userEmail, request);
-                return Ok(new
-                {
-                    Success = true,
-                    Message = "Data insert successfully",
-                    data = data
-                });
+            var data = await _businessLayer.UpdateBrandsById(id, userEmail, request);
 
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                return StatusCode(500, new { Success = false, Message = ex.Message });
-            }
+                Success = true,
+                Message = "Brand updated successfully",
+                data
+            });
         }
 
         [HttpDelete("delete/{id}")]

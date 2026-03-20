@@ -47,6 +47,7 @@ namespace elemechWisetrack.Controllers
 
         [Route("list")]
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> ListCategory()
         {
             try
