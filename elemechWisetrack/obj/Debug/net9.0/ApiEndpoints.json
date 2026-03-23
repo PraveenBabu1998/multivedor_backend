@@ -505,6 +505,22 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "elemechWisetrack.Controllers.AddToCartController",
+    "Method": "UpdateCartQuantity",
+    "RelativePath": "api/cart/update-quantity",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "elemechWisetrack.Models.UpdateCartQuantityModel",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "elemechWisetrack.Controllers.ColorsController",
     "Method": "Add",
     "RelativePath": "api/colors/add",

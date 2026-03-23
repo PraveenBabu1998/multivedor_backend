@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("elemechWisetrack")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fa9e96d9fd7ceb6995b929877ea759617c880b09")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2d2bd6465ab50736795cd52f84cf4e6919f9d9f3")]
 [assembly: System.Reflection.AssemblyProductAttribute("elemechWisetrack")]
 [assembly: System.Reflection.AssemblyTitleAttribute("elemechWisetrack")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

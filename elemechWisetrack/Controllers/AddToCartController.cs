@@ -65,5 +65,15 @@ namespace elemechWisetrack.Controllers
             var result = await _businessLayer.ClearCart(email, ip);
             return Ok(result);
         }
+
+        [HttpPost("update-quantity")]
+        public async Task<IActionResult> UpdateCartQuantity(UpdateCartQuantityModel model)
+        {
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+
+            var result = await _businessLayer.UpdateCartQuantity(email, model);
+
+            return Ok(result);
+        }
     }
 }

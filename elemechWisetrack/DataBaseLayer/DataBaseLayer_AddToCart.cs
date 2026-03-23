@@ -10,6 +10,7 @@ namespace elemechWisetrack.DataBaseLayer
         Task<object> UpdateCart(string email, string ip, UpdateCartModel model);
         Task<object> RemoveItem(string email, string ip, Guid productId);
         Task<object> ClearCart(string email, string ip);
+        Task<object> UpdateCartQuantity(string email, UpdateCartQuantityModel model);
     }
 
     public partial interface IDataBaseLayer : IDataBaseLayer_AddToCart { }
@@ -253,6 +254,171 @@ namespace elemechWisetrack.DataBaseLayer
 
             await cmd.ExecuteNonQueryAsync();
             return new { Success = true };
+        }
+
+        public async Task<object> UpdateCartQuantity(string email, UpdateCartQuantityModel model)
+        {
+            using var conn = new NpgsqlConnection(DbConnection);
+            await conn.OpenAsync();
+
+            using var transaction = await conn.BeginTransactionAsync();
+
+            try
+            {
+                // 🔹 1. Get UserId
+                string getUser = @"SELECT ""Id"" FROM ""AspNetUsers"" WHERE ""Email""=@email LIMIT 1";
+
+                Guid userId;
+
+                using (var cmd = new NpgsqlCommand(getUser, conn, transaction))
+                {
+                    cmd.Parameters.AddWithValue("@email", email);
+                    var result = await cmd.ExecuteScalarAsync();
+
+                    if (result == null)
+                        return new { success = false, message = "User not found" };
+
+                    userId = Guid.Parse(result.ToString());
+                }
+
+                // 🔹 2. Get Cart Id
+                string getCart = @"SELECT id FROM carts WHERE user_id=@uid LIMIT 1";
+
+                Guid cartId;
+
+                using (var cmd = new NpgsqlCommand(getCart, conn, transaction))
+                {
+                    cmd.Parameters.AddWithValue("@uid", userId);
+                    var result = await cmd.ExecuteScalarAsync();
+
+                    if (result == null)
+                    {
+                        // create cart if not exists
+                        string createCart = @"INSERT INTO carts(user_id) VALUES(@uid) RETURNING id";
+
+                        using var createCmd = new NpgsqlCommand(createCart, conn, transaction);
+                        createCmd.Parameters.AddWithValue("@uid", userId);
+
+                        cartId = (Guid)await createCmd.ExecuteScalarAsync();
+                    }
+                    else
+                    {
+                        cartId = (Guid)result;
+                    }
+                }
+
+                // 🔹 3. Check if item exists
+                string checkItem = @"
+        SELECT id, quantity FROM cart_items
+        WHERE cart_id=@cartId AND product_id=@pid";
+
+                Guid itemId = Guid.Empty;
+                int qty = 0;
+
+                using (var cmd = new NpgsqlCommand(checkItem, conn, transaction))
+                {
+                    cmd.Parameters.AddWithValue("@cartId", cartId);
+                    cmd.Parameters.AddWithValue("@pid", model.ProductId);
+
+                    using var reader = await cmd.ExecuteReaderAsync();
+
+                    if (await reader.ReadAsync())
+                    {
+                        itemId = reader.GetGuid(0);
+                        qty = reader.GetInt32(1);
+                    }
+                }
+
+                // 🔥 4. HANDLE ACTION
+
+                if (model.Action == "ADD")
+                {
+                    if (itemId == Guid.Empty)
+                    {
+                        // 👉 insert new item
+                        string getPrice = "SELECT price FROM products WHERE id=@pid";
+
+                        decimal price;
+
+                        using (var cmd = new NpgsqlCommand(getPrice, conn, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("@pid", model.ProductId);
+                            price = (decimal)await cmd.ExecuteScalarAsync();
+                        }
+
+                        string insert = @"
+                INSERT INTO cart_items(cart_id, product_id, quantity, price)
+                VALUES(@cid, @pid, 1, @price)";
+
+                        using var cmdInsert = new NpgsqlCommand(insert, conn, transaction);
+                        cmdInsert.Parameters.AddWithValue("@cid", cartId);
+                        cmdInsert.Parameters.AddWithValue("@pid", model.ProductId);
+                        cmdInsert.Parameters.AddWithValue("@price", price);
+
+                        await cmdInsert.ExecuteNonQueryAsync();
+                    }
+                    else
+                    {
+                        // 👉 increment
+                        string update = @"
+                UPDATE cart_items
+                SET quantity = quantity + 1
+                WHERE id=@id";
+
+                        using var cmdUpdate = new NpgsqlCommand(update, conn, transaction);
+                        cmdUpdate.Parameters.AddWithValue("@id", itemId);
+
+                        await cmdUpdate.ExecuteNonQueryAsync();
+                    }
+                }
+                else if (model.Action == "REMOVE")
+                {
+                    if (itemId == Guid.Empty)
+                        return new { success = false, message = "Item not in cart" };
+
+                    if (qty <= 1)
+                    {
+                        // 👉 delete item
+                        string delete = "DELETE FROM cart_items WHERE id=@id";
+
+                        using var cmdDelete = new NpgsqlCommand(delete, conn, transaction);
+                        cmdDelete.Parameters.AddWithValue("@id", itemId);
+
+                        await cmdDelete.ExecuteNonQueryAsync();
+                    }
+                    else
+                    {
+                        // 👉 decrement
+                        string update = @"
+                UPDATE cart_items
+                SET quantity = quantity - 1
+                WHERE id=@id";
+
+                        using var cmdUpdate = new NpgsqlCommand(update, conn, transaction);
+                        cmdUpdate.Parameters.AddWithValue("@id", itemId);
+
+                        await cmdUpdate.ExecuteNonQueryAsync();
+                    }
+                }
+
+                await transaction.CommitAsync();
+
+                return new
+                {
+                    success = true,
+                    message = "Cart updated successfully"
+                };
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+
+                return new
+                {
+                    success = false,
+                    message = ex.Message
+                };
+            }
         }
     }
 }

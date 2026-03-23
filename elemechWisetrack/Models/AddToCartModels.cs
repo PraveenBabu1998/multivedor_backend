@@ -29,6 +29,12 @@
         public decimal Total { get; set; }
     }
 
+    public class UpdateCartQuantityModel
+    {
+        public Guid ProductId { get; set; }
+        public string Action { get; set; } // ADD / REMOVE
+    }
+
     public class CreateOrderModel
     {
         public Guid AddressId { get; set; }

@@ -10,6 +10,7 @@ namespace elemechWisetrack.BusinessLayer
         Task<object> UpdateCart(string email, string ip, UpdateCartModel model);
         Task<object> RemoveItem(string email, string ip, Guid productId);
         Task<object> ClearCart(string email, string ip);
+        Task<object> UpdateCartQuantity(string email, UpdateCartQuantityModel model);
     }
 
     public partial interface IBusinessLayer : IBusinessLayer_AddToCart { }
@@ -32,5 +33,10 @@ namespace elemechWisetrack.BusinessLayer
 
         public Task<object> ClearCart(string email, string ip)
             => _dataBaseLayer.ClearCart(email, ip);
+
+        public async Task<object> UpdateCartQuantity(string email, UpdateCartQuantityModel model)
+        {
+            return await _dataBaseLayer.UpdateCartQuantity(email, model);
+        }
     }
 }
