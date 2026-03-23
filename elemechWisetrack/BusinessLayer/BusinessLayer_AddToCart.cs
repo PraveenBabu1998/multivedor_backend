@@ -1,43 +1,36 @@
-﻿using elemechWisetrack.Models;
+﻿using elemechWisetrack.DataBaseLayer;
+using elemechWisetrack.Models;
 
 namespace elemechWisetrack.BusinessLayer
 {
     public interface IBusinessLayer_AddToCart
     {
-        Task<object> AddToCart(string userEmail, AddToCartModel model);
-        Task<object> GetCart(string userEmail);
-        Task<object> UpdateCart(string userEmail, UpdateCartModel model);
-        Task<object> RemoveItem(string userEmail, Guid productId);
-        Task<object> ClearCart(string userEmail);
+        Task<object> AddToCart(string email, string ip, AddToCartModel model);
+        Task<object> GetCart(string email, string ip);
+        Task<object> UpdateCart(string email, string ip, UpdateCartModel model);
+        Task<object> RemoveItem(string email, string ip, Guid productId);
+        Task<object> ClearCart(string email, string ip);
     }
 
     public partial interface IBusinessLayer : IBusinessLayer_AddToCart { }
 
     public partial class BusinessLayer
     {
-        public async Task<object> AddToCart(string userEmail, AddToCartModel model)
-        {
-            return await _dataBaseLayer.AddToCart(userEmail, model);
-        }
+        
 
-        public async Task<object> GetCart(string userEmail)
-        {
-            return await _dataBaseLayer.GetCart(userEmail);
-        }
+        public Task<object> AddToCart(string email, string ip, AddToCartModel model)
+            => _dataBaseLayer.AddToCart(email, ip, model);
 
-        public async Task<object> UpdateCart(string userEmail, UpdateCartModel model)
-        {
-            return await _dataBaseLayer.UpdateCart(userEmail, model);
-        }
+        public Task<object> GetCart(string email, string ip)
+            => _dataBaseLayer.GetCart(email, ip);
 
-        public async Task<object> RemoveItem(string userEmail, Guid productId)
-        {
-            return await _dataBaseLayer.RemoveItem(userEmail, productId);
-        }
+        public Task<object> UpdateCart(string email, string ip, UpdateCartModel model)
+            => _dataBaseLayer.UpdateCart(email, ip, model);
 
-        public async Task<object> ClearCart(string userEmail)
-        {
-            return await _dataBaseLayer.ClearCart(userEmail);
-        }
+        public Task<object> RemoveItem(string email, string ip, Guid productId)
+            => _dataBaseLayer.RemoveItem(email, ip, productId);
+
+        public Task<object> ClearCart(string email, string ip)
+            => _dataBaseLayer.ClearCart(email, ip);
     }
 }

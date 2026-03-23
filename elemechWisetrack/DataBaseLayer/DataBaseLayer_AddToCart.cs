@@ -5,77 +5,91 @@ namespace elemechWisetrack.DataBaseLayer
 {
     public interface IDataBaseLayer_AddToCart
     {
-        Task<object> AddToCart(string userEmail, AddToCartModel model);
-        Task<object> GetCart(string userEmail);
-        Task<object> UpdateCart(string userEmail, UpdateCartModel model);
-        Task<object> RemoveItem(string userEmail, Guid productId);
-        Task<object> ClearCart(string userEmail);
+        Task<object> AddToCart(string email, string ip, AddToCartModel model);
+        Task<object> GetCart(string email, string ip);
+        Task<object> UpdateCart(string email, string ip, UpdateCartModel model);
+        Task<object> RemoveItem(string email, string ip, Guid productId);
+        Task<object> ClearCart(string email, string ip);
     }
 
     public partial interface IDataBaseLayer : IDataBaseLayer_AddToCart { }
 
     public partial class DataBaseLayer
     {
-        
-        // ✅ Get userId from Email
-        private async Task<Guid?> GetUserIdByEmail(string userEmail, NpgsqlConnection conn)
+       
+
+        private async Task<Guid?> GetUserId(string email, NpgsqlConnection conn)
         {
-            string query = @"SELECT ""Id"" FROM ""AspNetUsers"" 
-                             WHERE ""Email"" = @Email LIMIT 1";
+            if (string.IsNullOrEmpty(email)) return null;
+
+            string query = @"SELECT ""Id"" FROM ""AspNetUsers"" WHERE ""Email""=@Email LIMIT 1";
 
             using var cmd = new NpgsqlCommand(query, conn);
-            cmd.Parameters.AddWithValue("@Email", userEmail);
+            cmd.Parameters.AddWithValue("@Email", email);
 
             var result = await cmd.ExecuteScalarAsync();
-
-            if (result == null)
-                return null;
-
-            return Guid.Parse(result.ToString());
+            return result == null ? null : Guid.Parse(result.ToString());
         }
 
-        // ✅ Get or Create Cart
-        private async Task<Guid> GetOrCreateCart(Guid userId, NpgsqlConnection conn)
+        private Guid ConvertIpToGuid(string ip)
         {
-            string query = @"SELECT id FROM carts WHERE user_id = @user_id LIMIT 1";
+            if (string.IsNullOrEmpty(ip))
+                ip = "0.0.0.0";
+
+            using (var md5 = System.Security.Cryptography.MD5.Create())
+            {
+                var hash = md5.ComputeHash(System.Text.Encoding.UTF8.GetBytes(ip));
+                return new Guid(hash);
+            }
+        }
+
+        private async Task<Guid> GetOrCreateCart(Guid? userId, string ip, NpgsqlConnection conn)
+        {
+            Guid guestGuid = ConvertIpToGuid(ip);
+
+            string query = userId != null
+                ? @"SELECT id FROM carts WHERE user_id = @user_id LIMIT 1"
+                : @"SELECT id FROM carts WHERE guest_id = @guest_id LIMIT 1";
 
             using var cmd = new NpgsqlCommand(query, conn);
-            cmd.Parameters.AddWithValue("@user_id", userId);
+
+            if (userId != null)
+                cmd.Parameters.AddWithValue("@user_id", userId);
+            else
+                cmd.Parameters.AddWithValue("@guest_id", guestGuid); // ✅ FIX
 
             var result = await cmd.ExecuteScalarAsync();
 
             if (result != null)
                 return (Guid)result;
 
-            string insertQuery = @"INSERT INTO carts (user_id) 
-                                   VALUES (@user_id) 
-                                   RETURNING id";
+            string insert = userId != null
+                ? @"INSERT INTO carts (user_id) VALUES (@user_id) RETURNING id"
+                : @"INSERT INTO carts (guest_id) VALUES (@guest_id) RETURNING id";
 
-            using var insertCmd = new NpgsqlCommand(insertQuery, conn);
-            insertCmd.Parameters.AddWithValue("@user_id", userId);
+            using var insertCmd = new NpgsqlCommand(insert, conn);
+
+            if (userId != null)
+                insertCmd.Parameters.AddWithValue("@user_id", userId);
+            else
+                insertCmd.Parameters.AddWithValue("@guest_id", guestGuid); // ✅ FIX
 
             return (Guid)await insertCmd.ExecuteScalarAsync();
         }
 
-        // ✅ Add to Cart
-        public async Task<object> AddToCart(string userEmail, AddToCartModel model)
+        public async Task<object> AddToCart(string email, string ip, AddToCartModel model)
         {
             using var conn = new NpgsqlConnection(DbConnection);
             await conn.OpenAsync();
 
-            var userId = await GetUserIdByEmail(userEmail, conn);
-            if (userId == null)
-                return new { Success = false, Message = "User not found" };
-
-            var cartId = await GetOrCreateCart(userId.Value, conn);
+            var userId = await GetUserId(email, conn);
+            var cartId = await GetOrCreateCart(userId, ip, conn);
 
             string query = @"
                 INSERT INTO cart_items (cart_id, product_id, quantity, price)
                 VALUES (@cart_id, @product_id, @quantity, @price)
                 ON CONFLICT (cart_id, product_id)
-                DO UPDATE SET 
-                    quantity = cart_items.quantity + EXCLUDED.quantity,
-                    updated_at = CURRENT_TIMESTAMP";
+                DO UPDATE SET quantity = cart_items.quantity + EXCLUDED.quantity";
 
             using var cmd = new NpgsqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@cart_id", cartId);
@@ -85,52 +99,101 @@ namespace elemechWisetrack.DataBaseLayer
 
             await cmd.ExecuteNonQueryAsync();
 
-            return new { Success = true, Message = "Added to cart" };
+            return new { Success = true };
         }
 
-        // ✅ Get Cart
-        public async Task<object> GetCart(string userEmail)
+        public async Task<object> GetCart(string email, string ip)
         {
             using var conn = new NpgsqlConnection(DbConnection);
             await conn.OpenAsync();
 
-            var userId = await GetUserIdByEmail(userEmail, conn);
+            var userId = await GetUserId(email, conn);
 
-            if (userId == null)
-                return new { Success = false, Message = "User not found" };
+            Guid? userCartId = null;
+            Guid? guestCartId = null;
 
-            var cartId = await GetOrCreateCart(userId.Value, conn);
+            // ✅ Convert IP → UUID
+            var guestGuid = ConvertIpToGuid(ip);
 
-            // 🔥 JOIN with products table
+            // ✅ Step 1: Get guest cart
+            string guestQuery = @"SELECT id FROM carts WHERE guest_id = @guest_id LIMIT 1";
+            using (var guestCmd = new NpgsqlCommand(guestQuery, conn))
+            {
+                guestCmd.Parameters.AddWithValue("@guest_id", guestGuid);
+                var result = await guestCmd.ExecuteScalarAsync();
+                if (result != null)
+                    guestCartId = (Guid)result;
+            }
+
+            // ✅ Step 2: If user logged in → get user cart
+            if (userId != null)
+            {
+                userCartId = await GetOrCreateCart(userId, ip, conn);
+
+                // 🔥 STEP 3: MERGE (ONLY IF BOTH EXIST)
+                if (guestCartId != null)
+                {
+                    string mergeQuery = @"
+                INSERT INTO cart_items (cart_id, product_id, quantity, price)
+                SELECT @userCartId, product_id, quantity, price
+                FROM cart_items
+                WHERE cart_id = @guestCartId
+                ON CONFLICT (cart_id, product_id)
+                DO UPDATE SET 
+                    quantity = cart_items.quantity + EXCLUDED.quantity,
+                    updated_at = CURRENT_TIMESTAMP";
+
+                    using var mergeCmd = new NpgsqlCommand(mergeQuery, conn);
+                    mergeCmd.Parameters.AddWithValue("@userCartId", userCartId);
+                    mergeCmd.Parameters.AddWithValue("@guestCartId", guestCartId);
+
+                    await mergeCmd.ExecuteNonQueryAsync();
+
+                    // ✅ Delete guest cart after merge
+                    string deleteQuery = @"DELETE FROM carts WHERE id = @guestCartId";
+
+                    using var deleteCmd = new NpgsqlCommand(deleteQuery, conn);
+                    deleteCmd.Parameters.AddWithValue("@guestCartId", guestCartId);
+
+                    await deleteCmd.ExecuteNonQueryAsync();
+                }
+            }
+
+            // ✅ Step 4: Decide final cartId
+            Guid finalCartId;
+
+            if (userId != null)
+                finalCartId = userCartId.Value;
+            else if (guestCartId != null)
+                finalCartId = guestCartId.Value;
+            else
+                finalCartId = await GetOrCreateCart(null, ip, conn);
+
+            // ✅ Step 5: Fetch cart data
             string query = @"
-        SELECT 
-            ci.product_id,
-            ci.quantity,
-            ci.price,
-            p.name,
-            p.mainimage,
-            p.price AS product_price
+        SELECT ci.product_id, ci.quantity, ci.price,
+               p.name, p.mainimage, p.price
         FROM cart_items ci
         JOIN products p ON p.id = ci.product_id
         WHERE ci.cart_id = @cart_id";
 
             using var cmd = new NpgsqlCommand(query, conn);
-            cmd.Parameters.AddWithValue("@cart_id", cartId);
+            cmd.Parameters.AddWithValue("@cart_id", finalCartId);
 
             using var reader = await cmd.ExecuteReaderAsync();
 
-            var list = new List<object>();
+            var list = new List<CartResponseModel>();
 
             while (await reader.ReadAsync())
             {
-                list.Add(new
+                list.Add(new CartResponseModel
                 {
                     ProductId = reader.GetGuid(0),
                     Quantity = reader.GetInt32(1),
-                    Price = reader.GetDecimal(2), // cart price
+                    Price = reader.GetDecimal(2),
                     ProductName = reader.GetString(3),
                     ProductImage = reader.IsDBNull(4) ? null : reader.GetString(4),
-                    CurrentPrice = reader.GetDecimal(5), // latest product price
+                    CurrentPrice = reader.GetDecimal(5),
                     Total = reader.GetInt32(1) * reader.GetDecimal(2)
                 });
             }
@@ -138,76 +201,58 @@ namespace elemechWisetrack.DataBaseLayer
             return list;
         }
 
-        // ✅ Update Cart
-        public async Task<object> UpdateCart(string userEmail, UpdateCartModel model)
+        public async Task<object> UpdateCart(string email, string ip, UpdateCartModel model)
         {
             using var conn = new NpgsqlConnection(DbConnection);
             await conn.OpenAsync();
 
-            var userId = await GetUserIdByEmail(userEmail, conn);
-            if (userId == null)
-                return new { Success = false, Message = "User not found" };
+            var userId = await GetUserId(email, conn);
+            var cartId = await GetOrCreateCart(userId, ip, conn);
 
-            var cartId = await GetOrCreateCart(userId.Value, conn);
-
-            string query = @"UPDATE cart_items 
-                             SET quantity = @quantity, updated_at = CURRENT_TIMESTAMP
-                             WHERE cart_id = @cart_id AND product_id = @product_id";
+            string query = @"UPDATE cart_items SET quantity=@q WHERE cart_id=@c AND product_id=@p";
 
             using var cmd = new NpgsqlCommand(query, conn);
-            cmd.Parameters.AddWithValue("@cart_id", cartId);
-            cmd.Parameters.AddWithValue("@product_id", model.ProductId);
-            cmd.Parameters.AddWithValue("@quantity", model.Quantity);
+            cmd.Parameters.AddWithValue("@q", model.Quantity);
+            cmd.Parameters.AddWithValue("@c", cartId);
+            cmd.Parameters.AddWithValue("@p", model.ProductId);
 
             await cmd.ExecuteNonQueryAsync();
-
-            return new { Success = true, Message = "Cart updated" };
+            return new { Success = true };
         }
 
-        // ✅ Remove Item
-        public async Task<object> RemoveItem(string userEmail, Guid productId)
+        public async Task<object> RemoveItem(string email, string ip, Guid productId)
         {
             using var conn = new NpgsqlConnection(DbConnection);
             await conn.OpenAsync();
 
-            var userId = await GetUserIdByEmail(userEmail, conn);
-            if (userId == null)
-                return new { Success = false, Message = "User not found" };
+            var userId = await GetUserId(email, conn);
+            var cartId = await GetOrCreateCart(userId, ip, conn);
 
-            var cartId = await GetOrCreateCart(userId.Value, conn);
-
-            string query = @"DELETE FROM cart_items 
-                             WHERE cart_id = @cart_id AND product_id = @product_id";
+            string query = @"DELETE FROM cart_items WHERE cart_id=@c AND product_id=@p";
 
             using var cmd = new NpgsqlCommand(query, conn);
-            cmd.Parameters.AddWithValue("@cart_id", cartId);
-            cmd.Parameters.AddWithValue("@product_id", productId);
+            cmd.Parameters.AddWithValue("@c", cartId);
+            cmd.Parameters.AddWithValue("@p", productId);
 
             await cmd.ExecuteNonQueryAsync();
-
-            return new { Success = true, Message = "Item removed" };
+            return new { Success = true };
         }
 
-        // ✅ Clear Cart
-        public async Task<object> ClearCart(string userEmail)
+        public async Task<object> ClearCart(string email, string ip)
         {
             using var conn = new NpgsqlConnection(DbConnection);
             await conn.OpenAsync();
 
-            var userId = await GetUserIdByEmail(userEmail, conn);
-            if (userId == null)
-                return new { Success = false, Message = "User not found" };
+            var userId = await GetUserId(email, conn);
+            var cartId = await GetOrCreateCart(userId, ip, conn);
 
-            var cartId = await GetOrCreateCart(userId.Value, conn);
-
-            string query = @"DELETE FROM cart_items WHERE cart_id = @cart_id";
+            string query = @"DELETE FROM cart_items WHERE cart_id=@c";
 
             using var cmd = new NpgsqlCommand(query, conn);
-            cmd.Parameters.AddWithValue("@cart_id", cartId);
+            cmd.Parameters.AddWithValue("@c", cartId);
 
             await cmd.ExecuteNonQueryAsync();
-
-            return new { Success = true, Message = "Cart cleared" };
+            return new { Success = true };
         }
     }
 }

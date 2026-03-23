@@ -715,6 +715,154 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "elemechWisetrack.Controllers.OrdersController",
+    "Method": "UpdateExchangeStatus",
+    "RelativePath": "api/orders/admin/exchange/update-status",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "elemechWisetrack.Models.UpdateExchangeStatusModel",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.OrdersController",
+    "Method": "CancelOrder",
+    "RelativePath": "api/orders/cancel/{orderId}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "orderId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.OrdersController",
+    "Method": "Create",
+    "RelativePath": "api/orders/create",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "elemechWisetrack.Models.CreateOrderModel",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.OrdersController",
+    "Method": "RequestExchange",
+    "RelativePath": "api/orders/exchange",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "elemechWisetrack.Models.ExchangeRequestModel",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.OrdersController",
+    "Method": "GetMyExchangeRequests",
+    "RelativePath": "api/orders/exchange-list",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.OrdersController",
+    "Method": "CompleteExchange",
+    "RelativePath": "api/orders/exchange/complete/{exchangeId}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "exchangeId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.OrdersController",
+    "Method": "SchedulePickup",
+    "RelativePath": "api/orders/exchange/pickup",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "elemechWisetrack.Models.PickupRequestModel",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.OrdersController",
+    "Method": "UpdatePickupStatus",
+    "RelativePath": "api/orders/exchange/pickup-status",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "elemechWisetrack.Models.PickupStatusUpdateModel",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.OrdersController",
+    "Method": "GetOrders",
+    "RelativePath": "api/orders/my-orders",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.OrdersController",
+    "Method": "Verify",
+    "RelativePath": "api/orders/verify",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "elemechWisetrack.Models.RazorpayVerifyModel",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "elemechWisetrack.Controllers.ProductsController",
     "Method": "AddSingleProduct",
     "RelativePath": "api/products/insert",

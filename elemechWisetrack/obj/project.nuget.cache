@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "iMR90XqVZ0M=",
+  "dgSpecHash": "tVXR5yU6Mcs=",
   "success": true,
   "projectFilePath": "C:\\Users\\abhi_\\source\\repos\\elemechWisetrack\\elemechWisetrack\\elemechWisetrack.csproj",
   "expectedPackageFiles": [
@@ -139,6 +139,8 @@
     "C:\\Users\\abhi_\\.nuget\\packages\\nuget.projectmodel\\6.11.0\\nuget.projectmodel.6.11.0.nupkg.sha512",
     "C:\\Users\\abhi_\\.nuget\\packages\\nuget.protocol\\6.11.0\\nuget.protocol.6.11.0.nupkg.sha512",
     "C:\\Users\\abhi_\\.nuget\\packages\\nuget.versioning\\6.11.0\\nuget.versioning.6.11.0.nupkg.sha512",
+    "C:\\Users\\abhi_\\.nuget\\packages\\portable.bouncycastle\\1.9.0\\portable.bouncycastle.1.9.0.nupkg.sha512",
+    "C:\\Users\\abhi_\\.nuget\\packages\\razorpay\\3.3.2\\razorpay.3.3.2.nupkg.sha512",
     "C:\\Users\\abhi_\\.nuget\\packages\\system.codedom\\6.0.0\\system.codedom.6.0.0.nupkg.sha512",
     "C:\\Users\\abhi_\\.nuget\\packages\\system.collections.immutable\\8.0.0\\system.collections.immutable.8.0.0.nupkg.sha512",
     "C:\\Users\\abhi_\\.nuget\\packages\\system.composition\\7.0.0\\system.composition.7.0.0.nupkg.sha512",
