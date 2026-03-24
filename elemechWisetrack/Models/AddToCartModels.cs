@@ -74,4 +74,18 @@
         public Guid ExchangeId { get; set; }
         public string Status { get; set; }
     }
+
+    public class OrderItemModel
+    {
+        public Guid ProductId { get; set; }
+        public decimal Price { get; set; }
+        public int Quantity { get; set; }
+
+        // ✅ GST Fields
+        public decimal GstRate { get; set; }
+        public decimal CGST { get; set; }
+        public decimal SGST { get; set; }
+        public decimal IGST { get; set; }
+        public decimal GstAmount { get; set; }
+    }
 }
