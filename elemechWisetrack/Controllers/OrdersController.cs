@@ -17,14 +17,31 @@ namespace elemechWisetrack.Controllers
             this._businessLayer = businessLayer;
         }
 
+        [HttpPost("checkout")]
+        public async Task<IActionResult> GetCheckoutDetails()
+        {
+            string email = User.FindFirst(ClaimTypes.Email)?.Value ??
+                           User.FindFirst("email")?.Value ??
+                           User.FindFirst("UserName")?.Value;
+
+            if (string.IsNullOrEmpty(email))
+                return Unauthorized();
+
+            var result = await _businessLayer.GetCheckoutDetails(email);
+            return Ok(result);
+        }
+
         [HttpPost("create")]
         public async Task<IActionResult> Create(CreateOrderModel model)
         {
-            string userEmail = User.FindFirst(ClaimTypes.Email)?.Value ??
-                                   User.FindFirst("email")?.Value ??
-                                   User.FindFirst("UserName")?.Value;
+            string email = User.FindFirst(ClaimTypes.Email)?.Value ??
+                           User.FindFirst("email")?.Value ??
+                           User.FindFirst("UserName")?.Value;
 
-            var result = await _businessLayer.CreateOrder(userEmail, model);
+            if (string.IsNullOrEmpty(email))
+                return Unauthorized();
+
+            var result = await _businessLayer.CreateOrder(email, model);
             return Ok(result);
         }
 

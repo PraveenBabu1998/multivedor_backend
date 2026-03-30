@@ -7,6 +7,7 @@ namespace elemechWisetrack.DataBaseLayer
 {
     public interface IDataBaseLayer_Orders
     {
+        Task<object> GetCheckoutDetails(string email);
         Task<object> CreateOrder(string email, CreateOrderModel model);
         Task<object> VerifyPayment(RazorpayVerifyModel model);
         Task<object> GetUserOrders(string email);
@@ -24,135 +25,235 @@ namespace elemechWisetrack.DataBaseLayer
 
     public partial class DataBaseLayer
     {
-        // ✅ CREATE ORDER
-        public async Task<object> CreateOrder(string email, CreateOrderModel model)
+        public async Task<object> GetCheckoutDetails(string email)
         {
             using var conn = new NpgsqlConnection(DbConnection);
             await conn.OpenAsync();
 
-            // 🔹 1. GET USER ID
+            // 🔹 1. Get User ID
             string getUserQuery = @"SELECT ""Id"" FROM ""AspNetUsers"" WHERE ""Email""=@Email LIMIT 1";
-
             Guid userId;
 
             using (var cmd = new NpgsqlCommand(getUserQuery, conn))
             {
                 cmd.Parameters.AddWithValue("@Email", email);
                 var result = await cmd.ExecuteScalarAsync();
-
                 if (result == null)
                     return new { success = false, message = "User not found" };
-
                 userId = Guid.Parse(result.ToString());
             }
 
-            // 🔹 2. GET CART ITEMS (JOIN carts + cart_items ✅)
-            var cartItems = new List<(Guid productId, int qty, decimal price)>();
-
+            // 🔹 2. Get Cart Items with Product Info
+            List<CartProductDetail> cartItems = new();
             string cartQuery = @"
-            SELECT ci.product_id, ci.quantity, ci.price
-            FROM cart_items ci
-            JOIN carts c ON c.id = ci.cart_id
-            WHERE c.user_id = @userId";
+        SELECT ci.product_id, ci.quantity, p.name, p.price, p.mainimage
+        FROM cart_items ci
+        JOIN carts c ON c.id = ci.cart_id
+        JOIN products p ON p.id = ci.product_id
+        WHERE c.user_id = @userId";
 
             using (var cmd = new NpgsqlCommand(cartQuery, conn))
             {
                 cmd.Parameters.AddWithValue("@userId", userId);
-
                 using var reader = await cmd.ExecuteReaderAsync();
-
                 while (await reader.ReadAsync())
                 {
-                    cartItems.Add((
-                        reader.GetGuid(0),
-                        reader.GetInt32(1),
-                        reader.GetDecimal(2)
-                    ));
+                    cartItems.Add(new CartProductDetail
+                    {
+                        ProductId = reader.GetGuid(0),
+                        Quantity = reader.GetInt32(1),
+                        ProductName = reader.GetString(2),
+                        Price = reader.GetDecimal(3),
+                        Image = reader.IsDBNull(4) ? null : reader.GetString(4)
+                    });
                 }
             }
 
-            if (!cartItems.Any())
-                return new { success = false, message = "Cart is empty" };
+            // 🔹 3. Get User Addresses
+        //    List<UserAddressDetail> addresses = new();
+        //    string addressQuery = @"
+        //SELECT id, full_name, phone_number, address_line1, address_line2, city, state, postal_code
+        //FROM address_details
+        //WHERE user_id = @userId";
 
-            decimal total = cartItems.Sum(x => x.qty * x.price);
+        //    using (var cmd = new NpgsqlCommand(addressQuery, conn))
+        //    {
+        //        cmd.Parameters.AddWithValue("@userId", userId);
+        //        using var reader = await cmd.ExecuteReaderAsync();
+        //        while (await reader.ReadAsync())
+        //        {
+        //            addresses.Add(new UserAddressDetail
+        //            {
+        //                AddressId = reader.GetGuid(0),
+        //                Name = reader.GetString(1),
+        //                Phone = reader.GetString(2),
+        //                AddressLine1 = reader.GetString(3),
+        //                AddressLine2 = reader.GetString(4),
+        //                City = reader.GetString(5),
+        //                State = reader.GetString(6),
+        //                Pincode = reader.GetString(7)
+        //            });
+        //        }
+        //    }
 
-            string razorpayOrderId = null;
+            decimal totalAmount = cartItems.Sum(x => x.Price * x.Quantity);
 
-            // 🔹 3. RAZORPAY ORDER
-            if (model.PaymentMethod == "RAZORPAY")
+            return new CheckoutDetailsResponse
             {
-                var client = new RazorpayClient(_key, _secret);
-
-                var options = new Dictionary<string, object>
-                {
-                    { "amount", (int)(total * 100) },
-                    { "currency", "INR" },
-                    { "receipt", Guid.NewGuid().ToString() }
-                };
-
-                var order = client.Order.Create(options);
-                razorpayOrderId = order["id"].ToString();
-            }
-
-            // 🔹 4. INSERT ORDER
-            string insertOrder = @"
-            INSERT INTO orders 
-            (user_email, address_id, total_amount, payment_method, payment_status, order_status, razorpay_order_id)
-            VALUES (@email, @address, @total, @method, @paymentStatus, @status, @razorpayId)
-            RETURNING id";
-
-            Guid orderId;
-
-            using (var cmd = new NpgsqlCommand(insertOrder, conn))
-            {
-                cmd.Parameters.AddWithValue("@email", email);
-                cmd.Parameters.AddWithValue("@address", model.AddressId);
-                cmd.Parameters.AddWithValue("@total", total);
-                cmd.Parameters.AddWithValue("@method", model.PaymentMethod);
-                cmd.Parameters.AddWithValue("@paymentStatus",
-                    model.PaymentMethod == "COD" ? "SUCCESS" : "PENDING");
-                cmd.Parameters.AddWithValue("@status", "PLACED");
-                cmd.Parameters.AddWithValue("@razorpayId", (object?)razorpayOrderId ?? DBNull.Value);
-
-                orderId = (Guid)await cmd.ExecuteScalarAsync();
-            }
-
-            // 🔹 5. INSERT ORDER ITEMS
-            foreach (var item in cartItems)
-            {
-                string itemQuery = @"
-                INSERT INTO order_items (order_id, product_id, quantity, price)
-                VALUES (@oid, @pid, @qty, @price)";
-
-                using var cmd = new NpgsqlCommand(itemQuery, conn);
-                cmd.Parameters.AddWithValue("@oid", orderId);
-                cmd.Parameters.AddWithValue("@pid", item.productId);
-                cmd.Parameters.AddWithValue("@qty", item.qty);
-                cmd.Parameters.AddWithValue("@price", item.price);
-
-                await cmd.ExecuteNonQueryAsync();
-            }
-
-            // 🔹 6. CLEAR CART (JOIN DELETE ✅)
-            string clearCart = @"
-            DELETE FROM cart_items ci
-            USING carts c
-            WHERE ci.cart_id = c.id
-            AND c.user_id = @userId";
-
-            using (var cmd = new NpgsqlCommand(clearCart, conn))
-            {
-                cmd.Parameters.AddWithValue("@userId", userId);
-                await cmd.ExecuteNonQueryAsync();
-            }
-
-            return new
-            {
-                success = true,
-                orderId,
-                razorpayOrderId,
-                amount = total
+                UserId = userId,
+                Email = email,
+                CartItems = cartItems,
+                //Addresses = addresses,
+                TotalAmount = totalAmount
             };
+        }
+
+        // ✅ CREATE ORDER
+        public async Task<object> CreateOrder(string email, CreateOrderModel model)
+        {
+            using var conn = new NpgsqlConnection(DbConnection);
+            await conn.OpenAsync();
+
+            using var transaction = await conn.BeginTransactionAsync();
+
+            try
+            {
+                // 🔹 1. GET USER ID
+                string getUserQuery = @"SELECT ""Id"" FROM ""AspNetUsers"" WHERE ""Email""=@Email LIMIT 1";
+
+                Guid userId;
+
+                using (var cmd = new NpgsqlCommand(getUserQuery, conn, transaction))
+                {
+                    cmd.Parameters.AddWithValue("@Email", email);
+                    var result = await cmd.ExecuteScalarAsync();
+
+                    if (result == null)
+                        return new { success = false, message = "User not found" };
+
+                    userId = Guid.Parse(result.ToString());
+                }
+
+                // 🔹 2. VALIDATE ITEMS
+                if (model.Items == null || !model.Items.Any())
+                    return new { success = false, message = "No items provided" };
+
+                var cartItems = new List<(Guid productId, int qty, decimal price)>();
+
+                foreach (var item in model.Items)
+                {
+                    string productQuery = "SELECT price FROM products WHERE id=@pid";
+
+                    using var cmd = new NpgsqlCommand(productQuery, conn, transaction);
+                    cmd.Parameters.AddWithValue("@pid", item.ProductId);
+
+                    var result = await cmd.ExecuteScalarAsync();
+
+                    if (result == null)
+                        return new { success = false, message = "Invalid product" };
+
+                    decimal price = (decimal)result;
+
+                    if (item.Quantity <= 0)
+                        return new { success = false, message = "Invalid quantity" };
+
+                    cartItems.Add((item.ProductId, item.Quantity, price));
+                }
+
+                // 🔹 3. CALCULATE TOTAL
+                decimal total = cartItems.Sum(x => x.qty * x.price);
+
+                string razorpayOrderId = null;
+
+                // 🔹 4. CREATE RAZORPAY ORDER
+                if (model.PaymentMethod == "RAZORPAY")
+                {
+                    var client = new RazorpayClient(_key, _secret);
+
+                    var options = new Dictionary<string, object>
+            {
+                { "amount", (int)(total * 100) },
+                { "currency", "INR" },
+                { "receipt", Guid.NewGuid().ToString() }
+            };
+
+                    var order = client.Order.Create(options);
+                    razorpayOrderId = order["id"].ToString();
+                }
+
+                // 🔹 5. INSERT ORDER
+                string insertOrder = @"
+        INSERT INTO orders 
+        (user_email, address_id, total_amount, payment_method, payment_status, order_status, razorpay_order_id)
+        VALUES (@email, @address, @total, @method, @paymentStatus, @status, @razorpayId)
+        RETURNING id";
+
+                Guid orderId;
+
+                using (var cmd = new NpgsqlCommand(insertOrder, conn, transaction))
+                {
+                    cmd.Parameters.AddWithValue("@email", email);
+                    cmd.Parameters.AddWithValue("@address", model.AddressId);
+                    cmd.Parameters.AddWithValue("@total", total);
+                    cmd.Parameters.AddWithValue("@method", model.PaymentMethod);
+                    cmd.Parameters.AddWithValue("@paymentStatus",
+                        model.PaymentMethod == "COD" ? "SUCCESS" : "PENDING");
+                    cmd.Parameters.AddWithValue("@status", "PLACED");
+                    cmd.Parameters.AddWithValue("@razorpayId", (object?)razorpayOrderId ?? DBNull.Value);
+
+                    orderId = (Guid)await cmd.ExecuteScalarAsync();
+                }
+
+                // 🔹 6. INSERT ORDER ITEMS
+                foreach (var item in cartItems)
+                {
+                    string itemQuery = @"
+            INSERT INTO order_items (order_id, product_id, quantity, price)
+            VALUES (@oid, @pid, @qty, @price)";
+
+                    using var cmd = new NpgsqlCommand(itemQuery, conn, transaction);
+                    cmd.Parameters.AddWithValue("@oid", orderId);
+                    cmd.Parameters.AddWithValue("@pid", item.productId);
+                    cmd.Parameters.AddWithValue("@qty", item.qty);
+                    cmd.Parameters.AddWithValue("@price", item.price);
+
+                    await cmd.ExecuteNonQueryAsync();
+                }
+
+                // 🔹 7. CLEAR CART (OPTIONAL BUT RECOMMENDED)
+                string clearCart = @"
+        DELETE FROM cart_items ci
+        USING carts c
+        WHERE ci.cart_id = c.id
+        AND c.user_id = @userId";
+
+                using (var cmd = new NpgsqlCommand(clearCart, conn, transaction))
+                {
+                    cmd.Parameters.AddWithValue("@userId", userId);
+                    await cmd.ExecuteNonQueryAsync();
+                }
+
+                // 🔹 8. COMMIT
+                await transaction.CommitAsync();
+
+                return new
+                {
+                    success = true,
+                    orderId,
+                    razorpayOrderId,
+                    amount = total
+                };
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+
+                return new
+                {
+                    success = false,
+                    message = ex.Message
+                };
+            }
         }
 
         // ✅ VERIFY PAYMENT

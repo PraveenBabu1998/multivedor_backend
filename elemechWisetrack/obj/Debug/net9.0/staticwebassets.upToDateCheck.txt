@@ -139,6 +139,14 @@ wwwroot\uploads\89eb8124-a840-4726-92f8-104a5c8436de.png
 wwwroot\uploads\702140a4-a1c4-4153-8cab-21bb4d0821c5.jpeg
 wwwroot\brands\b1e4a2d8-88b1-4403-a792-2aba83a3a71d.jpeg
 wwwroot\brands\0957b3cf-e8b1-4c72-baf4-5848927f5693.jpeg
+wwwroot\images\7f3c68ad-449b-480b-b968-8513d86ce10d.png
+wwwroot\images\c5ecb667-ef7b-4ae8-8579-7952d8e32167.png
+wwwroot\images\b1693fac-66d1-4404-a4ab-479a3a21e981.png
+wwwroot\uploads\f6ec398c-42ba-48b4-8553-bfc9e56bc9da.png
+wwwroot\uploads\a40e1c6f-a1b3-4fe1-9ac7-cbd5579e6570.png
+wwwroot\uploads\cc2c8d47-0eaf-43f2-a952-8614f694d892.png
+wwwroot\uploads\388730bb-8cca-4681-a351-73a02d473de1.png
+wwwroot\uploads\482af17d-2fb1-4610-b0dc-0c953524b283.png
 C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\css\site.css
 C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\favicon.ico
 C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\js\site.js
