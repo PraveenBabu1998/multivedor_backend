@@ -1,5 +1,10 @@
+wwwroot\brands\0957b3cf-e8b1-4c72-baf4-5848927f5693.jpeg
+wwwroot\brands\b1e4a2d8-88b1-4403-a792-2aba83a3a71d.jpeg
 wwwroot\css\site.css
 wwwroot\favicon.ico
+wwwroot\images\7f3c68ad-449b-480b-b968-8513d86ce10d.png
+wwwroot\images\b1693fac-66d1-4404-a4ab-479a3a21e981.png
+wwwroot\images\c5ecb667-ef7b-4ae8-8579-7952d8e32167.png
 wwwroot\js\site.js
 wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css
 wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css.map
@@ -61,18 +66,31 @@ wwwroot\lib\jquery\dist\jquery.slim.js
 wwwroot\lib\jquery\dist\jquery.slim.min.js
 wwwroot\lib\jquery\dist\jquery.slim.min.map
 wwwroot\lib\jquery\LICENSE.txt
-wwwroot\uploads\categories\b36ab3ad-e860-4a08-9080-799bead19f7d_safa 2.png
-wwwroot\uploads\categories\f139ef26-1090-40c7-8de6-5d059cb4b8e0_safa 2.png
+wwwroot\uploads\13e79cca-1bc6-4322-ac84-2c02d0ab3ae5.jpeg
+wwwroot\uploads\1e876e58-bfb1-455a-a706-4ed6bedf30db.jpeg
+wwwroot\uploads\388730bb-8cca-4681-a351-73a02d473de1.png
+wwwroot\uploads\482af17d-2fb1-4610-b0dc-0c953524b283.png
+wwwroot\uploads\6793860b-9f59-4d3d-97c7-1b00797d9d34.jpeg
+wwwroot\uploads\702140a4-a1c4-4153-8cab-21bb4d0821c5.jpeg
+wwwroot\uploads\7d26f37c-abca-4694-8f4e-7311ad5ffd19.jpeg
+wwwroot\uploads\80d21920-6b38-4e65-8cf2-c837a9a4b4a1.png
+wwwroot\uploads\89eb8124-a840-4726-92f8-104a5c8436de.png
+wwwroot\uploads\a40e1c6f-a1b3-4fe1-9ac7-cbd5579e6570.png
+wwwroot\uploads\categories\3ce74d98-fc1d-4071-a3a4-6670f4aeedd6_TRACKWIZE - LOGO.png
+wwwroot\uploads\categories\57397f56-72ea-4f30-a26e-0c8a66bd3dd8_TRACKWIZE - LOGO.png
 wwwroot\uploads\categories\66b444de-ebb4-4bb9-b1a0-5ef3102e8835_TRACKWIZE - LOGO.png
-wwwroot\uploads\categories\df2076df-7742-42a3-9e8c-228e6f2c18b1_TRACKWIZE - LOGO.png
-wwwroot\uploads\categories\fc5e00fd-2d85-4c3a-8ab8-4bbbdb718883_TRACKWIZE - LOGO.png
+wwwroot\uploads\categories\788f3b08-cc54-4a9a-920c-0803f366ac2a_TRACKWIZE - LOGO.png
 wwwroot\uploads\categories\81107aeb-19fd-426d-9a1c-e0bc88faca7d_TRACKWIZE - LOGO.png
 wwwroot\uploads\categories\9d439b1d-54b7-4e07-a8a1-6b2fa8bfd135_TRACKWIZE - LOGO.png
+wwwroot\uploads\categories\b36ab3ad-e860-4a08-9080-799bead19f7d_safa 2.png
+wwwroot\uploads\categories\df2076df-7742-42a3-9e8c-228e6f2c18b1_TRACKWIZE - LOGO.png
 wwwroot\uploads\categories\f0bbbf40-509f-4be5-86c2-9fd8559d7518_TRACKWIZE - LOGO.png
-wwwroot\uploads\categories\788f3b08-cc54-4a9a-920c-0803f366ac2a_TRACKWIZE - LOGO.png
-wwwroot\uploads\categories\57397f56-72ea-4f30-a26e-0c8a66bd3dd8_TRACKWIZE - LOGO.png
+wwwroot\uploads\categories\f139ef26-1090-40c7-8de6-5d059cb4b8e0_safa 2.png
+wwwroot\uploads\categories\fc5e00fd-2d85-4c3a-8ab8-4bbbdb718883_TRACKWIZE - LOGO.png
 wwwroot\uploads\categories\ff1a1cc8-2577-41ed-9393-8f641d971971_TRACKWIZE - LOGO.png
-wwwroot\uploads\categories\3ce74d98-fc1d-4071-a3a4-6670f4aeedd6_TRACKWIZE - LOGO.png
+wwwroot\uploads\cc2c8d47-0eaf-43f2-a952-8614f694d892.png
+wwwroot\uploads\db36d314-1a44-4446-a761-ca6ef6fd4cae.jpeg
+wwwroot\uploads\f6ec398c-42ba-48b4-8553-bfc9e56bc9da.png
 wwwroot\uploads\products\003dfd4c-1e9c-4dc6-8c5e-fac3204edf2b.jpg
 wwwroot\uploads\products\125e8394-49cd-4879-9152-fcd2a69c4450.jpg
 wwwroot\uploads\products\161b5569-23d9-43f8-80a8-8ad0bd2eb7e2.jpg
@@ -129,24 +147,6 @@ wwwroot\uploads\products\f299fb26-0753-4a9d-a80b-ceb2e6386e6f.jpg
 wwwroot\uploads\products\f64b55d0-7142-4bd0-820c-f1e7c9f7101c.jpg
 wwwroot\uploads\products\f9f83d2d-e891-4c97-96f6-ca31f5e0b745.jpg
 wwwroot\uploads\products\fa949a80-00d1-408a-a8c5-a852fa505667.jpg
-wwwroot\uploads\7d26f37c-abca-4694-8f4e-7311ad5ffd19.jpeg
-wwwroot\uploads\13e79cca-1bc6-4322-ac84-2c02d0ab3ae5.jpeg
-wwwroot\uploads\6793860b-9f59-4d3d-97c7-1b00797d9d34.jpeg
-wwwroot\uploads\db36d314-1a44-4446-a761-ca6ef6fd4cae.jpeg
-wwwroot\uploads\1e876e58-bfb1-455a-a706-4ed6bedf30db.jpeg
-wwwroot\uploads\80d21920-6b38-4e65-8cf2-c837a9a4b4a1.png
-wwwroot\uploads\89eb8124-a840-4726-92f8-104a5c8436de.png
-wwwroot\uploads\702140a4-a1c4-4153-8cab-21bb4d0821c5.jpeg
-wwwroot\brands\b1e4a2d8-88b1-4403-a792-2aba83a3a71d.jpeg
-wwwroot\brands\0957b3cf-e8b1-4c72-baf4-5848927f5693.jpeg
-wwwroot\images\7f3c68ad-449b-480b-b968-8513d86ce10d.png
-wwwroot\images\c5ecb667-ef7b-4ae8-8579-7952d8e32167.png
-wwwroot\images\b1693fac-66d1-4404-a4ab-479a3a21e981.png
-wwwroot\uploads\f6ec398c-42ba-48b4-8553-bfc9e56bc9da.png
-wwwroot\uploads\a40e1c6f-a1b3-4fe1-9ac7-cbd5579e6570.png
-wwwroot\uploads\cc2c8d47-0eaf-43f2-a952-8614f694d892.png
-wwwroot\uploads\388730bb-8cca-4681-a351-73a02d473de1.png
-wwwroot\uploads\482af17d-2fb1-4610-b0dc-0c953524b283.png
 C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\css\site.css
 C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\favicon.ico
 C:\Users\abhi_\source\repos\elemechWisetrack\elemechWisetrack\wwwroot\js\site.js

@@ -1929,6 +1929,48 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "elemechWisetrack.Controllers.UserController",
+    "Method": "AddWishListProduct",
+    "RelativePath": "api/user/add/{productId}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "productId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.UserController",
+    "Method": "DeleteWishListProduct",
+    "RelativePath": "api/user/delete/{productId}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "productId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.UserController",
+    "Method": "GetWishListProduct",
+    "RelativePath": "api/user/list",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "elemechWisetrack.Controllers.VendorBusinessController",
     "Method": "DeleteVendorBusinessDetail",
     "RelativePath": "api/vendor/business/delete/{busiDetailId}",
