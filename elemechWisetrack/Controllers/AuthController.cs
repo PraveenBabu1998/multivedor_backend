@@ -106,6 +106,7 @@ namespace elemechWisetrack.Controllers
     new Claim("LastName", userInfo.LastName ?? ""),
     new Claim("UserOrg", userInfo.OrgId ?? ""),
     new Claim("AccessKey", userInfo.AccessKey ?? ""),
+    new Claim("Status", userInfo.Status ?? ""),
     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
     new Claim(
         JwtRegisteredClaimNames.Iat,

@@ -36,6 +36,62 @@ namespace elemechWisetrack.Controllers
             return Ok(result);
         }
 
+        [Route("register-vendor")]
+        [AllowAnonymous]
+        [HttpPost]
+        public async Task<IActionResult> RegisterVendor()
+        {
+            var form = await Request.ReadFormAsync();
+            var result = await _businessLayer.RegisterVendor(form);
+            return Ok(result);
+        }
+
+        [Authorize(Roles = "SUPERADMIN")]
+        [HttpPost("approve-vendor/{id}")]
+        public async Task<IActionResult> ApproveVendor(string id)
+        {
+            var adminId = User.FindFirstValue(ClaimTypes.Email);
+
+            var result = await _businessLayer.ApproveVendor(id, adminId);
+
+            return Ok(result);
+        }
+
+        [Authorize(Roles = "SUPERADMIN")]
+        [HttpPost("reject-vendor/{id}")]
+        public async Task<IActionResult> RejectVendor(string id)
+        {
+            var form = await Request.ReadFormAsync();
+            string reason = form["reason"];
+
+            var adminEmail = User.FindFirstValue(ClaimTypes.Email);
+
+            if (string.IsNullOrEmpty(adminEmail))
+            {
+                return Unauthorized(new { success = false, message = "Admin email missing in token" });
+            }
+
+            var result = await _businessLayer.RejectVendor(id, adminEmail, reason);
+
+            return Ok(result);
+        }
+
+        [Authorize(Roles = "SUPERADMIN")]
+        [HttpGet("admin-vendors")]
+        public async Task<IActionResult> GetAdminVendors()
+        {
+            var result = await _businessLayer.GetAdminVendors();
+            return Ok(result);
+        }
+
+        [Authorize(Roles = "SUPERADMIN")]
+        [HttpGet("users")]
+        public async Task<IActionResult> GetUsers()
+        {
+            var result = await _businessLayer.GetAllUsersByRole();
+            return Ok(result);
+        }
+
 
         [Route("login")]
         [AllowAnonymous]

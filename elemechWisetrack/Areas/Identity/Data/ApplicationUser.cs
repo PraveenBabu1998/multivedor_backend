@@ -25,5 +25,12 @@ public class ApplicationUser : IdentityUser
     public string? email { get; set; } = null;
     public string? PhoneNumber { get; set; }
 
+    public bool IsVendor { get; set; } = false;
+    public string Status { get; set; } = "pending"; // pending / approved / rejected
+
+    public DateTime? ApprovedAt { get; set; }
+    public string ApprovedBy { get; set; }
+    public string RejectionReason { get; set; }
+
 }
 
