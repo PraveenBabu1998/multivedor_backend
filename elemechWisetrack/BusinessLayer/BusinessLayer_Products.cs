@@ -10,6 +10,7 @@ namespace elemechWisetrack.BusinessLayer
     {
         Task<object> AddSingleProduct(string userEmail, ProductInsertModel request);
         Task<object> GetAllProducts(int? page, int? pageSize);
+        Task<object> GetProductById(Guid productId);
         Task<object> GetAllProductsOfAdmin(string userEmail, int? page, int? pageSize);
         Task<object> UpdateProduct(
     Guid productId,
@@ -53,6 +54,11 @@ namespace elemechWisetrack.BusinessLayer
         public async Task<object> GetAllProducts(int? page, int? pageSize)
         {
             return await _dataBaseLayer.GetAllProducts(page, pageSize);
+        }
+
+        public async Task<object> GetProductById(Guid productId)
+        {
+            return await _dataBaseLayer.GetProductById(productId); // ✅ MUST await
         }
 
         public async Task<object> GetAllProductsOfAdmin(string userEmail, int? page, int? pageSize)

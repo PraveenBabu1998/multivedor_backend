@@ -1317,6 +1317,22 @@
   },
   {
     "ContainingType": "elemechWisetrack.Controllers.ProductsController",
+    "Method": "GetProductById",
+    "RelativePath": "api/products/get/{productId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "productId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.ProductsController",
     "Method": "AddSingleProduct",
     "RelativePath": "api/products/insert",
     "HttpMethod": "POST",

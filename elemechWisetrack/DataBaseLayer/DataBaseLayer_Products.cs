@@ -11,6 +11,7 @@ namespace elemechWisetrack.DataBaseLayer
     ProductInsertModel request,
     string baseSlug);
         Task<object> GetAllProducts(int? page, int? pageSize);
+        Task<object> GetProductById(Guid productId);
         Task<object> GetAllProductsOfAdmin(string userEmail, int? page, int? pageSize);
         Task<object> UpdateProduct(
     Guid productId,
@@ -398,6 +399,142 @@ LIMIT @pageSize OFFSET @offset;
                 {
                     success = false,
                     message = "Error while fetching products",
+                    error = ex.Message
+                };
+            }
+        }
+
+        public async Task<object> GetProductById(Guid productId)
+        {
+            try
+            {
+                using (var conn = new NpgsqlConnection(DbConnection))
+                {
+                    await conn.OpenAsync();
+
+                    string query = @"
+SELECT p.*, 
+       c.name AS category_name,
+       sc.name AS subcategory_name,
+       b.name AS brand_name,
+
+       -- ✅ Colors
+       COALESCE(
+           ARRAY_AGG(DISTINCT col.name) 
+           FILTER (WHERE col.id IS NOT NULL), '{}'
+       ) AS colors,
+
+       -- ✅ Sizes
+       COALESCE(
+           ARRAY_AGG(DISTINCT s.name) 
+           FILTER (WHERE s.id IS NOT NULL), '{}'
+       ) AS sizes
+
+FROM products p
+
+LEFT JOIN categories c ON p.categoryid = c.id
+LEFT JOIN categories sc ON p.subcategoryid = sc.id
+LEFT JOIN brands b ON p.brandid = b.id
+
+LEFT JOIN product_colors pc ON p.id = pc.productid
+LEFT JOIN colors col ON pc.colorid = col.id
+
+LEFT JOIN product_sizes ps ON p.id = ps.product_id
+LEFT JOIN sizes s ON ps.size_id = s.id
+
+WHERE p.id = @productId AND p.isdeleted = FALSE
+
+GROUP BY p.id, c.name, sc.name, b.name;
+";
+
+                    using (var cmd = new NpgsqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@productId", productId);
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            if (await reader.ReadAsync())
+                            {
+                                var product = new
+                                {
+                                    Id = reader.GetGuid(reader.GetOrdinal("Id")),
+                                    Name = reader["Name"]?.ToString(),
+                                    Slug = reader["Slug"]?.ToString(),
+                                    ShortDescription = reader["ShortDescription"]?.ToString(),
+                                    Description = reader["Description"]?.ToString(),
+
+                                    CategoryId = reader["CategoryId"],
+                                    SubCategoryId = reader["SubCategoryId"] == DBNull.Value ? null : reader["SubCategoryId"],
+                                    BrandId = reader["BrandId"] == DBNull.Value ? null : reader["BrandId"],
+
+                                    CategoryName = reader["category_name"] == DBNull.Value ? null : reader["category_name"].ToString(),
+                                    SubCategoryName = reader["subcategory_name"] == DBNull.Value ? null : reader["subcategory_name"].ToString(),
+                                    BrandName = reader["brand_name"] == DBNull.Value ? null : reader["brand_name"].ToString(),
+
+                                    Colors = reader["colors"] == DBNull.Value
+                                        ? new string[] { }
+                                        : (string[])reader["colors"],
+
+                                    Sizes = reader["sizes"] == DBNull.Value
+                                        ? new string[] { }
+                                        : (string[])reader["sizes"],
+
+                                    Price = reader["Price"],
+                                    DiscountPrice = reader["DiscountPrice"] == DBNull.Value ? null : reader["DiscountPrice"],
+                                    CostPrice = reader["CostPrice"] == DBNull.Value ? null : reader["CostPrice"],
+                                    TaxPercentage = reader["TaxPercentage"] == DBNull.Value ? null : reader["TaxPercentage"],
+
+                                    SKU = reader["SKU"]?.ToString(),
+
+                                    StockQuantity = reader["StockQuantity"],
+                                    MinStockQuantity = reader["MinStockQuantity"] == DBNull.Value ? null : reader["MinStockQuantity"],
+                                    TrackInventory = reader["TrackInventory"],
+
+                                    MainImage = reader["MainImage"]?.ToString(),
+
+                                    GalleryImages = reader["GalleryImages"] == DBNull.Value
+                                        ? new string[] { }
+                                        : (string[])reader["GalleryImages"],
+
+                                    Weight = reader["Weight"] == DBNull.Value ? null : reader["Weight"],
+                                    Length = reader["Length"] == DBNull.Value ? null : reader["Length"],
+                                    Width = reader["Width"] == DBNull.Value ? null : reader["Width"],
+                                    Height = reader["Height"] == DBNull.Value ? null : reader["Height"],
+
+                                    MetaTitle = reader["MetaTitle"]?.ToString(),
+                                    MetaDescription = reader["MetaDescription"]?.ToString(),
+                                    MetaKeywords = reader["MetaKeywords"]?.ToString(),
+
+                                    IsActive = reader["IsActive"],
+                                    IsFeatured = reader["IsFeatured"],
+                                    IsDeleted = reader["IsDeleted"],
+
+                                    CreatedBy = reader["CreatedBy"] == DBNull.Value ? null : reader["CreatedBy"],
+                                    CreatedDate = reader["CreatedDate"]
+                                };
+
+                                return new
+                                {
+                                    success = true,
+                                    data = product
+                                };
+                            }
+                        }
+                    }
+
+                    return new
+                    {
+                        success = false,
+                        message = "Product not found"
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new
+                {
+                    success = false,
+                    message = "Error while fetching product",
                     error = ex.Message
                 };
             }

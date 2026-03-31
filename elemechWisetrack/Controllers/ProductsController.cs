@@ -55,6 +55,15 @@ namespace elemechWisetrack.Controllers
             return Ok(new {Success = true, Message = "Product list successfully",data = data});
         }
 
+        [Route("get/{productId}")]
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetProductById(Guid productId)
+        {
+            var data = await _businessLayer.GetProductById(productId);
+            return Ok(new { Success = true, Message = "Product get successfully", data = data });
+        }
+
         [Route("list-by-admin")]
         [HttpGet]
         public async Task<IActionResult> GetAllProductsOfAdmin(int? page, int? pageSize)
