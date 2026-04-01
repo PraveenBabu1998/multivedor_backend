@@ -9,4 +9,10 @@
         public bool CategoryStatus { get; set; }
     }
 
+    public class ReviewModel
+    {
+        public int Rating { get; set; }
+        public string Comment { get; set; }
+    }
+
 }
