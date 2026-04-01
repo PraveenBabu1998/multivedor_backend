@@ -29,8 +29,8 @@ public class ApplicationUser : IdentityUser
     public string Status { get; set; } = "pending"; // pending / approved / rejected
 
     public DateTime? ApprovedAt { get; set; }
-    public string ApprovedBy { get; set; }
-    public string RejectionReason { get; set; }
+    public string? ApprovedBy { get; set; }
+    public string? RejectionReason { get; set; }
 
 }
 
