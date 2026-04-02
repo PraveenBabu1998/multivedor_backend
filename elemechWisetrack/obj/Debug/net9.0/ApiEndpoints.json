@@ -709,10 +709,16 @@
     "ContainingType": "elemechWisetrack.Controllers.AddToCartController",
     "Method": "GetCart",
     "RelativePath": "api/cart/list",
-    "HttpMethod": "GET",
+    "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
-    "Parameters": [],
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "elemechWisetrack.Models.CartRequest",
+        "IsRequired": true
+      }
+    ],
     "ReturnTypes": []
   },
   {
@@ -1117,7 +1123,13 @@
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
-    "Parameters": [],
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "elemechWisetrack.Models.CheckoutRequest",
+        "IsRequired": true
+      }
+    ],
     "ReturnTypes": []
   },
   {

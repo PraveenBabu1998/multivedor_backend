@@ -6,7 +6,7 @@ namespace elemechWisetrack.DataBaseLayer
     public interface IDataBaseLayer_AddToCart
     {
         Task<object> AddToCart(string email, string ip, AddToCartModel model);
-        Task<object> GetCart(string email, string ip);
+        Task<object> GetCart(string email, string ip, string couponCode);
         Task<object> UpdateCart(string email, string ip, UpdateCartModel model);
         Task<object> RemoveItem(string email, string ip, Guid productId);
         Task<object> ClearCart(string email, string ip);
@@ -318,7 +318,7 @@ namespace elemechWisetrack.DataBaseLayer
         //        };
         //    }
 
-        public async Task<object> GetCart(string email, string ip)
+        public async Task<object> GetCart(string email, string ip, string couponCode)
         {
             using var conn = new NpgsqlConnection(DbConnection);
             await conn.OpenAsync();
@@ -427,26 +427,23 @@ namespace elemechWisetrack.DataBaseLayer
             await reader.CloseAsync();
 
             // ============================
-            // STEP 5: APPLY COUPON ON TOTAL
+            // STEP 5: APPLY COUPON FROM PARAM
             // ============================
             decimal discount = 0;
             string appliedCoupon = null;
 
-            if (!string.IsNullOrEmpty(email))
+            if (!string.IsNullOrEmpty(couponCode))
             {
                 string couponQuery = @"
-        SELECT c.*
-        FROM coupon_usage cu
-        JOIN coupons c ON c.id = cu.coupon_id
-        WHERE cu.user_email = @user_email
-        AND c.is_active = TRUE
-        AND c.start_date <= NOW()
-        AND c.end_date >= NOW()
-        ORDER BY c.discount_value DESC
-        LIMIT 1";
+        SELECT *
+        FROM coupons
+        WHERE code = @code
+        AND is_active = TRUE
+        AND start_date <= NOW()
+        AND end_date >= NOW()";
 
                 using var couponCmd = new NpgsqlCommand(couponQuery, conn);
-                couponCmd.Parameters.AddWithValue("@user_email", email);
+                couponCmd.Parameters.AddWithValue("@code", couponCode);
 
                 using var couponReader = await couponCmd.ExecuteReaderAsync();
 
@@ -456,26 +453,38 @@ namespace elemechWisetrack.DataBaseLayer
                     var discountValue = Convert.ToDecimal(couponReader["discount_value"]);
                     var minOrder = Convert.ToDecimal(couponReader["min_order_amount"]);
 
-                    var maxDiscount = couponReader["max_discount_amount"] == DBNull.Value
+                    decimal? maxDiscount = couponReader["max_discount_amount"] == DBNull.Value
                         ? (decimal?)null
                         : Convert.ToDecimal(couponReader["max_discount_amount"]);
 
                     if (subTotal >= minOrder)
                     {
                         if (discountType == "percentage")
-                        {
                             discount = (subTotal * discountValue) / 100;
-                        }
                         else if (discountType == "fixed")
-                        {
                             discount = discountValue;
-                        }
 
                         if (maxDiscount.HasValue && discount > maxDiscount.Value)
                             discount = maxDiscount.Value;
 
-                        appliedCoupon = couponReader["code"]?.ToString();
+                        appliedCoupon = couponCode;
                     }
+                    else
+                    {
+                        return new
+                        {
+                            success = false,
+                            message = $"Minimum order should be {minOrder}"
+                        };
+                    }
+                }
+                else
+                {
+                    return new
+                    {
+                        success = false,
+                        message = "Invalid or expired coupon"
+                    };
                 }
 
                 await couponReader.CloseAsync();
@@ -488,6 +497,7 @@ namespace elemechWisetrack.DataBaseLayer
 
             return new
             {
+                success = true,
                 Items = list,
                 SubTotal = subTotal,
                 Discount = discount,

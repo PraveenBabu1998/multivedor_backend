@@ -18,7 +18,7 @@ namespace elemechWisetrack.Controllers
         }
 
         [HttpPost("checkout")]
-        public async Task<IActionResult> GetCheckoutDetails()
+        public async Task<IActionResult> GetCheckoutDetails([FromBody] CheckoutRequest model)
         {
             string email = User.FindFirst(ClaimTypes.Email)?.Value ??
                            User.FindFirst("email")?.Value ??
@@ -27,7 +27,8 @@ namespace elemechWisetrack.Controllers
             if (string.IsNullOrEmpty(email))
                 return Unauthorized();
 
-            var result = await _businessLayer.GetCheckoutDetails(email);
+            var result = await _businessLayer.GetCheckoutDetails(email, model.CouponCode);
+
             return Ok(result);
         }
 

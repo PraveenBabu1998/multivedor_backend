@@ -5,7 +5,7 @@ namespace elemechWisetrack.BusinessLayer
 {
     public interface IBusinessLayer_Orders
     {
-        Task<object> GetCheckoutDetails(string email);
+        Task<object> GetCheckoutDetails(string email, string couponCode);
         Task<object> CreateOrder(string email, CreateOrderModel model);
         Task<object> VerifyPayment(RazorpayVerifyModel model);
         Task<object> GetUserOrders(string email);
@@ -25,9 +25,9 @@ namespace elemechWisetrack.BusinessLayer
 
     public partial class BusinessLayer
     {
-        public async Task<object> GetCheckoutDetails(string email)
+        public async Task<object> GetCheckoutDetails(string email, string couponCode)
         {
-            return await _dataBaseLayer.GetCheckoutDetails(email);
+            return await _dataBaseLayer.GetCheckoutDetails(email, couponCode);
         }
         public async Task<object> CreateOrder(string email, CreateOrderModel model)
         {

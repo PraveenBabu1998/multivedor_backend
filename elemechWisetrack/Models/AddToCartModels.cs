@@ -62,6 +62,8 @@
         public Guid AddressId { get; set; }
         public string PaymentMethod { get; set; }
 
+        public string? CouponCode { get; set; }
+
         public List<CreateOrderItemModel> Items { get; set; }
     }
     public class RazorpayVerifyModel
@@ -253,5 +255,15 @@
         public string City { get; set; }
         public string State { get; set; }
         public string Pincode { get; set; }
+    }
+
+    public class CheckoutRequest
+    {
+        public string? CouponCode { get; set; }
+    }
+
+    public class CartRequest
+    {
+        public string CouponCode { get; set; }
     }
 }

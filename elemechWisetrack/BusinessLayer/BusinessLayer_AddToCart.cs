@@ -6,7 +6,7 @@ namespace elemechWisetrack.BusinessLayer
     public interface IBusinessLayer_AddToCart
     {
         Task<object> AddToCart(string email, string ip, AddToCartModel model);
-        Task<object> GetCart(string email, string ip);
+        Task<object> GetCart(string email, string ip, string couponCode);
         Task<object> UpdateCart(string email, string ip, UpdateCartModel model);
         Task<object> RemoveItem(string email, string ip, Guid productId);
         Task<object> ClearCart(string email, string ip);
@@ -22,8 +22,8 @@ namespace elemechWisetrack.BusinessLayer
         public Task<object> AddToCart(string email, string ip, AddToCartModel model)
             => _dataBaseLayer.AddToCart(email, ip, model);
 
-        public Task<object> GetCart(string email, string ip)
-            => _dataBaseLayer.GetCart(email, ip);
+        public Task<object> GetCart(string email, string ip, string couponCode)
+            => _dataBaseLayer.GetCart(email, ip, couponCode);
 
         public Task<object> UpdateCart(string email, string ip, UpdateCartModel model)
             => _dataBaseLayer.UpdateCart(email, ip, model);

@@ -1,6 +1,7 @@
 ﻿using elemechWisetrack.BusinessLayer;
 using elemechWisetrack.Models;
 using Microsoft.AspNetCore.Mvc;
+using Org.BouncyCastle.Asn1.Crmf;
 using System.Security.Claims;
 
 namespace elemechWisetrack.Controllers
@@ -34,11 +35,11 @@ namespace elemechWisetrack.Controllers
             return Ok(result);
         }
 
-        [HttpGet("list")]
-        public async Task<IActionResult> GetCart()
+        [HttpPost("list")]
+        public async Task<IActionResult> GetCart([FromBody] CartRequest model)
         {
             var (email, ip) = GetUserOrGuest();
-            var result = await _businessLayer.GetCart(email, ip);
+            var result = await _businessLayer.GetCart(email, ip, model.CouponCode);
             return Ok(result);
         }
 
