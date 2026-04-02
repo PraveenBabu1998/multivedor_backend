@@ -25,90 +25,171 @@ namespace elemechWisetrack.DataBaseLayer
 
     public partial class DataBaseLayer
     {
-        //public async Task<object> GetCheckoutDetails(string email)
-        //{
-        //    using var conn = new NpgsqlConnection(DbConnection);
-        //    await conn.OpenAsync();
 
-        //    // 🔹 1. Get User ID
-        //    string getUserQuery = @"SELECT ""Id"" FROM ""AspNetUsers"" WHERE ""Email""=@Email LIMIT 1";
-        //    Guid userId;
+    //    public async Task<object> GetCheckoutDetails(string email)
+    //    {
+    //        using var conn = new NpgsqlConnection(DbConnection);
+    //        await conn.OpenAsync();
 
-        //    using (var cmd = new NpgsqlCommand(getUserQuery, conn))
-        //    {
-        //        cmd.Parameters.AddWithValue("@Email", email);
-        //        var result = await cmd.ExecuteScalarAsync();
-        //        if (result == null)
-        //            return new { success = false, message = "User not found" };
-        //        userId = Guid.Parse(result.ToString());
-        //    }
+    //        // ============================
+    //        // 🔹 1. GET USER ID
+    //        // ============================
+    //        string getUserQuery = @"SELECT ""Id"" FROM ""AspNetUsers"" WHERE ""Email""=@Email LIMIT 1";
+    //        Guid userId;
 
-        //    // 🔹 2. Get Cart Items with Product Info
-        //    List<CartProductDetail> cartItems = new();
-        //    string cartQuery = @"
-        //SELECT ci.product_id, ci.quantity, p.name, p.price, p.mainimage
-        //FROM cart_items ci
-        //JOIN carts c ON c.id = ci.cart_id
-        //JOIN products p ON p.id = ci.product_id
-        //WHERE c.user_id = @userId";
+    //        using (var cmd = new NpgsqlCommand(getUserQuery, conn))
+    //        {
+    //            cmd.Parameters.AddWithValue("@Email", email);
+    //            var result = await cmd.ExecuteScalarAsync();
+    //            if (result == null)
+    //                return new { success = false, message = "User not found" };
 
-        //    using (var cmd = new NpgsqlCommand(cartQuery, conn))
-        //    {
-        //        cmd.Parameters.AddWithValue("@userId", userId);
-        //        using var reader = await cmd.ExecuteReaderAsync();
-        //        while (await reader.ReadAsync())
-        //        {
-        //            cartItems.Add(new CartProductDetail
-        //            {
-        //                ProductId = reader.GetGuid(0),
-        //                Quantity = reader.GetInt32(1),
-        //                ProductName = reader.GetString(2),
-        //                Price = reader.GetDecimal(3),
-        //                Image = reader.IsDBNull(4) ? null : reader.GetString(4)
-        //            });
-        //        }
-        //    }
+    //            userId = Guid.Parse(result.ToString());
+    //        }
 
-        //    // 🔹 3. Get User Addresses
-        ////    List<UserAddressDetail> addresses = new();
-        ////    string addressQuery = @"
-        ////SELECT id, full_name, phone_number, address_line1, address_line2, city, state, postal_code
-        ////FROM address_details
-        ////WHERE user_id = @userId";
+    //        // ============================
+    //        // 🔹 2. GET CART ITEMS
+    //        // ============================
+    //        List<CartProductDetail> cartItems = new();
 
-        ////    using (var cmd = new NpgsqlCommand(addressQuery, conn))
-        ////    {
-        ////        cmd.Parameters.AddWithValue("@userId", userId);
-        ////        using var reader = await cmd.ExecuteReaderAsync();
-        ////        while (await reader.ReadAsync())
-        ////        {
-        ////            addresses.Add(new UserAddressDetail
-        ////            {
-        ////                AddressId = reader.GetGuid(0),
-        ////                Name = reader.GetString(1),
-        ////                Phone = reader.GetString(2),
-        ////                AddressLine1 = reader.GetString(3),
-        ////                AddressLine2 = reader.GetString(4),
-        ////                City = reader.GetString(5),
-        ////                State = reader.GetString(6),
-        ////                Pincode = reader.GetString(7)
-        ////            });
-        ////        }
-        ////    }
+    //        string cartQuery = @"
+    //SELECT ci.product_id, ci.quantity, p.name, p.discountprice, p.mainimage
+    //FROM cart_items ci
+    //JOIN carts c ON c.id = ci.cart_id
+    //JOIN products p ON p.id = ci.product_id
+    //WHERE c.user_id = @userId";
 
-        //    decimal totalAmount = cartItems.Sum(x => x.Price * x.Quantity);
+    //        using (var cmd = new NpgsqlCommand(cartQuery, conn))
+    //        {
+    //            cmd.Parameters.AddWithValue("@userId", userId);
 
-        //    return new CheckoutDetailsResponse
-        //    {
-        //        UserId = userId,
-        //        Email = email,
-        //        CartItems = cartItems,
-        //        //Addresses = addresses,
-        //        TotalAmount = totalAmount
-        //    };
-        //}
+    //            using var reader = await cmd.ExecuteReaderAsync();
+    //            while (await reader.ReadAsync())
+    //            {
+    //                cartItems.Add(new CartProductDetail
+    //                {
+    //                    ProductId = reader.GetGuid(0),
+    //                    Quantity = reader.GetInt32(1),
+    //                    ProductName = reader.GetString(2),
+    //                    Price = reader.GetDecimal(3),
+    //                    Image = reader.IsDBNull(4) ? null : reader.GetString(4),
+    //                    Discount = 0 // ✅ ADD THIS PROPERTY IN MODEL
+    //                });
+    //            }
+    //        }
 
-        // ✅ CREATE ORDER
+    //        // ============================
+    //        // 🔹 3. FETCH COUPONS
+    //        // ============================
+    //        decimal totalAmount = cartItems.Sum(x => x.Price * x.Quantity);
+    //        decimal totalDiscount = 0;
+
+    //        if (cartItems.Count > 0)
+    //        {
+    //            var productIds = cartItems.Select(x => x.ProductId).ToArray();
+
+    //            string couponQuery = @"
+    //    SELECT cu.product_id,
+    //           c.discount_type,
+    //           c.discount_value,
+    //           c.min_order_amount,
+    //           c.max_discount_amount
+    //    FROM coupon_usage cu
+    //    JOIN coupons c ON c.id = cu.coupon_id
+    //    WHERE cu.user_email = @user_email
+    //    AND cu.product_id = ANY(@product_ids)
+    //    AND c.is_active = TRUE
+    //    AND c.start_date <= NOW()
+    //    AND c.end_date >= NOW()";
+
+    //            using var couponCmd = new NpgsqlCommand(couponQuery, conn);
+    //            couponCmd.Parameters.AddWithValue("@user_email", email);
+    //            couponCmd.Parameters.AddWithValue("@product_ids", productIds);
+
+    //            using var couponReader = await couponCmd.ExecuteReaderAsync();
+
+    //            var couponMap = new Dictionary<Guid, List<CouponModel>>();
+
+    //            while (await couponReader.ReadAsync())
+    //            {
+    //                var productId = couponReader.GetGuid(0);
+
+    //                var coupon = new CouponModel
+    //                {
+    //                    DiscountType = couponReader["discount_type"]?.ToString(),
+    //                    DiscountValue = Convert.ToDecimal(couponReader["discount_value"]),
+    //                    MinOrderAmount = Convert.ToDecimal(couponReader["min_order_amount"]),
+    //                    MaxDiscountAmount = couponReader["max_discount_amount"] == DBNull.Value
+    //                        ? (decimal?)null
+    //                        : Convert.ToDecimal(couponReader["max_discount_amount"])
+    //                };
+
+    //                if (!couponMap.ContainsKey(productId))
+    //                    couponMap[productId] = new List<CouponModel>();
+
+    //                couponMap[productId].Add(coupon);
+    //            }
+
+    //            await couponReader.CloseAsync();
+
+    //            // ============================
+    //            // 🔹 4. APPLY BEST COUPON PER PRODUCT
+    //            // ============================
+    //            foreach (var item in cartItems)
+    //            {
+    //                decimal itemTotal = item.Price * item.Quantity;
+
+    //                if (!couponMap.ContainsKey(item.ProductId))
+    //                    continue;
+
+    //                decimal bestDiscount = 0;
+
+    //                foreach (var coupon in couponMap[item.ProductId])
+    //                {
+    //                    if (itemTotal < coupon.MinOrderAmount)
+    //                        continue;
+
+    //                    decimal tempDiscount = 0;
+
+    //                    if (coupon.DiscountType == "percentage")
+    //                    {
+    //                        tempDiscount = (itemTotal * coupon.DiscountValue) / 100;
+    //                    }
+    //                    else if (coupon.DiscountType == "fixed")
+    //                    {
+    //                        tempDiscount = coupon.DiscountValue;
+    //                    }
+
+    //                    if (coupon.MaxDiscountAmount.HasValue &&
+    //                        tempDiscount > coupon.MaxDiscountAmount.Value)
+    //                    {
+    //                        tempDiscount = coupon.MaxDiscountAmount.Value;
+    //                    }
+
+    //                    if (tempDiscount > bestDiscount)
+    //                        bestDiscount = tempDiscount;
+    //                }
+
+    //                item.Discount = bestDiscount;
+    //                totalDiscount += bestDiscount;
+    //            }
+    //        }
+
+    //        decimal finalAmount = totalAmount - totalDiscount;
+
+    //        // ============================
+    //        // 🔹 RESPONSE
+    //        // ============================
+    //        return new
+    //        {
+    //            UserId = userId,
+    //            Email = email,
+    //            CartItems = cartItems,
+    //            TotalAmount = totalAmount,
+    //            Discount = totalDiscount,
+    //            FinalAmount = finalAmount
+    //        };
+    //    }
 
         public async Task<object> GetCheckoutDetails(string email)
         {
@@ -125,6 +206,7 @@ namespace elemechWisetrack.DataBaseLayer
             {
                 cmd.Parameters.AddWithValue("@Email", email);
                 var result = await cmd.ExecuteScalarAsync();
+
                 if (result == null)
                     return new { success = false, message = "User not found" };
 
@@ -156,124 +238,89 @@ namespace elemechWisetrack.DataBaseLayer
                         Quantity = reader.GetInt32(1),
                         ProductName = reader.GetString(2),
                         Price = reader.GetDecimal(3),
-                        Image = reader.IsDBNull(4) ? null : reader.GetString(4),
-                        Discount = 0 // ✅ ADD THIS PROPERTY IN MODEL
+                        Image = reader.IsDBNull(4) ? null : reader.GetString(4)
                     });
                 }
             }
 
             // ============================
-            // 🔹 3. FETCH COUPONS
+            // 🔹 3. CALCULATE TOTAL
             // ============================
             decimal totalAmount = cartItems.Sum(x => x.Price * x.Quantity);
-            decimal totalDiscount = 0;
 
-            if (cartItems.Count > 0)
+            // ============================
+            // 🔹 4. APPLY COUPON ON TOTAL
+            // ============================
+            decimal discount = 0;
+            string appliedCoupon = null;
+
+            if (!string.IsNullOrEmpty(email))
             {
-                var productIds = cartItems.Select(x => x.ProductId).ToArray();
-
                 string couponQuery = @"
-        SELECT cu.product_id,
-               c.discount_type,
-               c.discount_value,
-               c.min_order_amount,
-               c.max_discount_amount
+        SELECT c.*
         FROM coupon_usage cu
         JOIN coupons c ON c.id = cu.coupon_id
         WHERE cu.user_email = @user_email
-        AND cu.product_id = ANY(@product_ids)
         AND c.is_active = TRUE
         AND c.start_date <= NOW()
-        AND c.end_date >= NOW()";
+        AND c.end_date >= NOW()
+        ORDER BY c.discount_value DESC
+        LIMIT 1";
 
                 using var couponCmd = new NpgsqlCommand(couponQuery, conn);
                 couponCmd.Parameters.AddWithValue("@user_email", email);
-                couponCmd.Parameters.AddWithValue("@product_ids", productIds);
 
                 using var couponReader = await couponCmd.ExecuteReaderAsync();
 
-                var couponMap = new Dictionary<Guid, List<CouponModel>>();
-
-                while (await couponReader.ReadAsync())
+                if (await couponReader.ReadAsync())
                 {
-                    var productId = couponReader.GetGuid(0);
+                    var discountType = couponReader["discount_type"]?.ToString();
+                    var discountValue = Convert.ToDecimal(couponReader["discount_value"]);
+                    var minOrder = Convert.ToDecimal(couponReader["min_order_amount"]);
 
-                    var coupon = new CouponModel
+                    var maxDiscount = couponReader["max_discount_amount"] == DBNull.Value
+                        ? (decimal?)null
+                        : Convert.ToDecimal(couponReader["max_discount_amount"]);
+
+                    // ✅ Apply on FULL CART TOTAL
+                    if (totalAmount >= minOrder)
                     {
-                        DiscountType = couponReader["discount_type"]?.ToString(),
-                        DiscountValue = Convert.ToDecimal(couponReader["discount_value"]),
-                        MinOrderAmount = Convert.ToDecimal(couponReader["min_order_amount"]),
-                        MaxDiscountAmount = couponReader["max_discount_amount"] == DBNull.Value
-                            ? (decimal?)null
-                            : Convert.ToDecimal(couponReader["max_discount_amount"])
-                    };
+                        if (discountType == "percentage")
+                        {
+                            discount = (totalAmount * discountValue) / 100;
+                        }
+                        else if (discountType == "fixed")
+                        {
+                            discount = discountValue;
+                        }
 
-                    if (!couponMap.ContainsKey(productId))
-                        couponMap[productId] = new List<CouponModel>();
+                        if (maxDiscount.HasValue && discount > maxDiscount.Value)
+                            discount = maxDiscount.Value;
 
-                    couponMap[productId].Add(coupon);
+                        appliedCoupon = couponReader["code"]?.ToString();
+                    }
                 }
 
                 await couponReader.CloseAsync();
-
-                // ============================
-                // 🔹 4. APPLY BEST COUPON PER PRODUCT
-                // ============================
-                foreach (var item in cartItems)
-                {
-                    decimal itemTotal = item.Price * item.Quantity;
-
-                    if (!couponMap.ContainsKey(item.ProductId))
-                        continue;
-
-                    decimal bestDiscount = 0;
-
-                    foreach (var coupon in couponMap[item.ProductId])
-                    {
-                        if (itemTotal < coupon.MinOrderAmount)
-                            continue;
-
-                        decimal tempDiscount = 0;
-
-                        if (coupon.DiscountType == "percentage")
-                        {
-                            tempDiscount = (itemTotal * coupon.DiscountValue) / 100;
-                        }
-                        else if (coupon.DiscountType == "fixed")
-                        {
-                            tempDiscount = coupon.DiscountValue;
-                        }
-
-                        if (coupon.MaxDiscountAmount.HasValue &&
-                            tempDiscount > coupon.MaxDiscountAmount.Value)
-                        {
-                            tempDiscount = coupon.MaxDiscountAmount.Value;
-                        }
-
-                        if (tempDiscount > bestDiscount)
-                            bestDiscount = tempDiscount;
-                    }
-
-                    item.Discount = bestDiscount;
-                    totalDiscount += bestDiscount;
-                }
             }
 
-            decimal finalAmount = totalAmount - totalDiscount;
+            // ============================
+            // 🔹 FINAL AMOUNT
+            // ============================
+            decimal finalAmount = totalAmount - discount;
 
-            // ============================
-            // 🔹 RESPONSE
-            // ============================
             return new
             {
                 UserId = userId,
                 Email = email,
                 CartItems = cartItems,
                 TotalAmount = totalAmount,
-                Discount = totalDiscount,
+                Discount = discount,
+                CouponCode = appliedCoupon,
                 FinalAmount = finalAmount
             };
         }
+
         //public async Task<object> CreateOrder(string email, CreateOrderModel model)
         //{
         //    using var conn = new NpgsqlConnection(DbConnection);
@@ -283,7 +330,9 @@ namespace elemechWisetrack.DataBaseLayer
 
         //    try
         //    {
+        //        // ============================
         //        // 🔹 1. GET USER ID
+        //        // ============================
         //        string getUserQuery = @"SELECT ""Id"" FROM ""AspNetUsers"" WHERE ""Email""=@Email LIMIT 1";
 
         //        Guid userId;
@@ -299,15 +348,17 @@ namespace elemechWisetrack.DataBaseLayer
         //            userId = Guid.Parse(result.ToString());
         //        }
 
+        //        // ============================
         //        // 🔹 2. VALIDATE ITEMS
+        //        // ============================
         //        if (model.Items == null || !model.Items.Any())
         //            return new { success = false, message = "No items provided" };
 
-        //        var cartItems = new List<(Guid productId, int qty, decimal price)>();
+        //        var cartItems = new List<OrderItemModel>();
 
         //        foreach (var item in model.Items)
         //        {
-        //            string productQuery = "SELECT price FROM products WHERE id=@pid";
+        //            string productQuery = "SELECT discountprice FROM products WHERE id=@pid";
 
         //            using var cmd = new NpgsqlCommand(productQuery, conn, transaction);
         //            cmd.Parameters.AddWithValue("@pid", item.ProductId);
@@ -319,25 +370,120 @@ namespace elemechWisetrack.DataBaseLayer
 
         //            decimal price = (decimal)result;
 
-        //            if (item.Quantity <= 0)
-        //                return new { success = false, message = "Invalid quantity" };
-
-        //            cartItems.Add((item.ProductId, item.Quantity, price));
+        //            cartItems.Add(new OrderItemModel
+        //            {
+        //                ProductId = item.ProductId,
+        //                Quantity = item.Quantity,
+        //                Price = price,
+        //                Discount = 0
+        //            });
         //        }
 
-        //        // 🔹 3. CALCULATE TOTAL
-        //        decimal total = cartItems.Sum(x => x.qty * x.price);
+        //        // ============================
+        //        // 🔹 3. FETCH COUPONS
+        //        // ============================
+        //        var productIds = cartItems.Select(x => x.ProductId).ToArray();
 
+        //        string couponQuery = @"
+        //SELECT cu.product_id,
+        //       c.discount_type,
+        //       c.discount_value,
+        //       c.min_order_amount,
+        //       c.max_discount_amount
+        //FROM coupon_usage cu
+        //JOIN coupons c ON c.id = cu.coupon_id
+        //WHERE cu.user_email = @user_email
+        //AND cu.product_id = ANY(@product_ids)
+        //AND c.is_active = TRUE
+        //AND c.start_date <= NOW()
+        //AND c.end_date >= NOW()";
+
+        //        var couponMap = new Dictionary<Guid, List<CouponModel>>();
+
+        //        using (var cmd = new NpgsqlCommand(couponQuery, conn, transaction))
+        //        {
+        //            cmd.Parameters.AddWithValue("@user_email", email);
+        //            cmd.Parameters.AddWithValue("@product_ids", productIds);
+
+        //            using var reader = await cmd.ExecuteReaderAsync();
+
+        //            while (await reader.ReadAsync())
+        //            {
+        //                var productId = reader.GetGuid(0);
+
+        //                var coupon = new CouponModel
+        //                {
+        //                    DiscountType = reader["discount_type"]?.ToString(),
+        //                    DiscountValue = Convert.ToDecimal(reader["discount_value"]),
+        //                    MinOrderAmount = Convert.ToDecimal(reader["min_order_amount"]),
+        //                    MaxDiscountAmount = reader["max_discount_amount"] == DBNull.Value
+        //                        ? (decimal?)null
+        //                        : Convert.ToDecimal(reader["max_discount_amount"])
+        //                };
+
+        //                if (!couponMap.ContainsKey(productId))
+        //                    couponMap[productId] = new List<CouponModel>();
+
+        //                couponMap[productId].Add(coupon);
+        //            }
+        //        }
+
+        //        // ============================
+        //        // 🔹 4. APPLY COUPON PER PRODUCT
+        //        // ============================
+        //        decimal total = 0;
+        //        decimal totalDiscount = 0;
+
+        //        foreach (var item in cartItems)
+        //        {
+        //            decimal itemTotal = item.Price * item.Quantity;
+        //            decimal bestDiscount = 0;
+
+        //            if (couponMap.ContainsKey(item.ProductId))
+        //            {
+        //                foreach (var coupon in couponMap[item.ProductId])
+        //                {
+        //                    if (itemTotal < coupon.MinOrderAmount)
+        //                        continue;
+
+        //                    decimal tempDiscount = 0;
+
+        //                    if (coupon.DiscountType == "percentage")
+        //                        tempDiscount = (itemTotal * coupon.DiscountValue) / 100;
+        //                    else if (coupon.DiscountType == "fixed")
+        //                        tempDiscount = coupon.DiscountValue;
+
+        //                    if (coupon.MaxDiscountAmount.HasValue &&
+        //                        tempDiscount > coupon.MaxDiscountAmount.Value)
+        //                    {
+        //                        tempDiscount = coupon.MaxDiscountAmount.Value;
+        //                    }
+
+        //                    if (tempDiscount > bestDiscount)
+        //                        bestDiscount = tempDiscount;
+        //                }
+        //            }
+
+        //            item.Discount = bestDiscount;
+
+        //            total += itemTotal;
+        //            totalDiscount += bestDiscount;
+        //        }
+
+        //        decimal finalAmount = total - totalDiscount;
+
+        //        // ============================
+        //        // 🔹 5. CREATE RAZORPAY ORDER
+        //        // ============================
         //        string razorpayOrderId = null;
 
-        //        // 🔹 4. CREATE RAZORPAY ORDER
         //        if (model.PaymentMethod == "RAZORPAY")
         //        {
         //            var client = new RazorpayClient(_key, _secret);
 
         //            var options = new Dictionary<string, object>
         //    {
-        //        { "amount", (int)(total * 100) },
+        //        { "amount", (int)(finalAmount * 100) }, // ✅ after discount
         //        { "currency", "INR" },
         //        { "receipt", Guid.NewGuid().ToString() }
         //    };
@@ -346,11 +492,15 @@ namespace elemechWisetrack.DataBaseLayer
         //            razorpayOrderId = order["id"].ToString();
         //        }
 
-        //        // 🔹 5. INSERT ORDER
+        //        // ============================
+        //        // 🔹 6. INSERT ORDER
+        //        // ============================
         //        string insertOrder = @"
         //INSERT INTO orders 
-        //(user_email, address_id, total_amount, payment_method, payment_status, order_status, razorpay_order_id)
-        //VALUES (@email, @address, @total, @method, @paymentStatus, @status, @razorpayId)
+        //(user_email, address_id, total_amount, discount_amount, final_amount,
+        // payment_method, payment_status, order_status, razorpay_order_id)
+        //VALUES (@email, @address, @total, @discount, @final,
+        //        @method, @paymentStatus, @status, @razorpayId)
         //RETURNING id";
 
         //        Guid orderId;
@@ -360,6 +510,8 @@ namespace elemechWisetrack.DataBaseLayer
         //            cmd.Parameters.AddWithValue("@email", email);
         //            cmd.Parameters.AddWithValue("@address", model.AddressId);
         //            cmd.Parameters.AddWithValue("@total", total);
+        //            cmd.Parameters.AddWithValue("@discount", totalDiscount);
+        //            cmd.Parameters.AddWithValue("@final", finalAmount);
         //            cmd.Parameters.AddWithValue("@method", model.PaymentMethod);
         //            cmd.Parameters.AddWithValue("@paymentStatus",
         //                model.PaymentMethod == "COD" ? "SUCCESS" : "PENDING");
@@ -369,23 +521,29 @@ namespace elemechWisetrack.DataBaseLayer
         //            orderId = (Guid)await cmd.ExecuteScalarAsync();
         //        }
 
-        //        // 🔹 6. INSERT ORDER ITEMS
+        //        // ============================
+        //        // 🔹 7. INSERT ORDER ITEMS
+        //        // ============================
         //        foreach (var item in cartItems)
         //        {
         //            string itemQuery = @"
-        //    INSERT INTO order_items (order_id, product_id, quantity, price)
-        //    VALUES (@oid, @pid, @qty, @price)";
+        //    INSERT INTO order_items 
+        //    (order_id, product_id, quantity, price, discount)
+        //    VALUES (@oid, @pid, @qty, @price, @discount)";
 
         //            using var cmd = new NpgsqlCommand(itemQuery, conn, transaction);
         //            cmd.Parameters.AddWithValue("@oid", orderId);
-        //            cmd.Parameters.AddWithValue("@pid", item.productId);
-        //            cmd.Parameters.AddWithValue("@qty", item.qty);
-        //            cmd.Parameters.AddWithValue("@price", item.price);
+        //            cmd.Parameters.AddWithValue("@pid", item.ProductId);
+        //            cmd.Parameters.AddWithValue("@qty", item.Quantity);
+        //            cmd.Parameters.AddWithValue("@price", item.Price);
+        //            cmd.Parameters.AddWithValue("@discount", item.Discount);
 
         //            await cmd.ExecuteNonQueryAsync();
         //        }
 
-        //        // 🔹 7. CLEAR CART (OPTIONAL BUT RECOMMENDED)
+        //        // ============================
+        //        // 🔹 8. CLEAR CART
+        //        // ============================
         //        string clearCart = @"
         //DELETE FROM cart_items ci
         //USING carts c
@@ -398,7 +556,6 @@ namespace elemechWisetrack.DataBaseLayer
         //            await cmd.ExecuteNonQueryAsync();
         //        }
 
-        //        // 🔹 8. COMMIT
         //        await transaction.CommitAsync();
 
         //        return new
@@ -406,7 +563,9 @@ namespace elemechWisetrack.DataBaseLayer
         //            success = true,
         //            orderId,
         //            razorpayOrderId,
-        //            amount = total
+        //            total,
+        //            discount = totalDiscount,
+        //            finalAmount
         //        };
         //    }
         //    catch (Exception ex)
@@ -420,8 +579,6 @@ namespace elemechWisetrack.DataBaseLayer
         //        };
         //    }
         //}
-
-        // ✅ VERIFY PAYMENT
 
         public async Task<object> CreateOrder(string email, CreateOrderModel model)
         {
@@ -477,99 +634,61 @@ namespace elemechWisetrack.DataBaseLayer
                         ProductId = item.ProductId,
                         Quantity = item.Quantity,
                         Price = price,
-                        Discount = 0
+                        Discount = 0 // no per-product discount now
                     });
                 }
 
                 // ============================
-                // 🔹 3. FETCH COUPONS
+                // 🔹 3. CALCULATE TOTAL
                 // ============================
-                var productIds = cartItems.Select(x => x.ProductId).ToArray();
+                decimal total = cartItems.Sum(x => x.Price * x.Quantity);
+
+                // ============================
+                // 🔹 4. APPLY COUPON ON TOTAL
+                // ============================
+                decimal totalDiscount = 0;
+                string appliedCoupon = null;
 
                 string couponQuery = @"
-        SELECT cu.product_id,
-               c.discount_type,
-               c.discount_value,
-               c.min_order_amount,
-               c.max_discount_amount
+        SELECT c.*
         FROM coupon_usage cu
         JOIN coupons c ON c.id = cu.coupon_id
         WHERE cu.user_email = @user_email
-        AND cu.product_id = ANY(@product_ids)
         AND c.is_active = TRUE
         AND c.start_date <= NOW()
-        AND c.end_date >= NOW()";
-
-                var couponMap = new Dictionary<Guid, List<CouponModel>>();
+        AND c.end_date >= NOW()
+        ORDER BY c.discount_value DESC
+        LIMIT 1";
 
                 using (var cmd = new NpgsqlCommand(couponQuery, conn, transaction))
                 {
                     cmd.Parameters.AddWithValue("@user_email", email);
-                    cmd.Parameters.AddWithValue("@product_ids", productIds);
 
                     using var reader = await cmd.ExecuteReaderAsync();
 
-                    while (await reader.ReadAsync())
+                    if (await reader.ReadAsync())
                     {
-                        var productId = reader.GetGuid(0);
+                        var discountType = reader["discount_type"]?.ToString();
+                        var discountValue = Convert.ToDecimal(reader["discount_value"]);
+                        var minOrder = Convert.ToDecimal(reader["min_order_amount"]);
 
-                        var coupon = new CouponModel
+                        var maxDiscount = reader["max_discount_amount"] == DBNull.Value
+                            ? (decimal?)null
+                            : Convert.ToDecimal(reader["max_discount_amount"]);
+
+                        if (total >= minOrder)
                         {
-                            DiscountType = reader["discount_type"]?.ToString(),
-                            DiscountValue = Convert.ToDecimal(reader["discount_value"]),
-                            MinOrderAmount = Convert.ToDecimal(reader["min_order_amount"]),
-                            MaxDiscountAmount = reader["max_discount_amount"] == DBNull.Value
-                                ? (decimal?)null
-                                : Convert.ToDecimal(reader["max_discount_amount"])
-                        };
+                            if (discountType == "percentage")
+                                totalDiscount = (total * discountValue) / 100;
+                            else if (discountType == "fixed")
+                                totalDiscount = discountValue;
 
-                        if (!couponMap.ContainsKey(productId))
-                            couponMap[productId] = new List<CouponModel>();
+                            if (maxDiscount.HasValue && totalDiscount > maxDiscount.Value)
+                                totalDiscount = maxDiscount.Value;
 
-                        couponMap[productId].Add(coupon);
-                    }
-                }
-
-                // ============================
-                // 🔹 4. APPLY COUPON PER PRODUCT
-                // ============================
-                decimal total = 0;
-                decimal totalDiscount = 0;
-
-                foreach (var item in cartItems)
-                {
-                    decimal itemTotal = item.Price * item.Quantity;
-                    decimal bestDiscount = 0;
-
-                    if (couponMap.ContainsKey(item.ProductId))
-                    {
-                        foreach (var coupon in couponMap[item.ProductId])
-                        {
-                            if (itemTotal < coupon.MinOrderAmount)
-                                continue;
-
-                            decimal tempDiscount = 0;
-
-                            if (coupon.DiscountType == "percentage")
-                                tempDiscount = (itemTotal * coupon.DiscountValue) / 100;
-                            else if (coupon.DiscountType == "fixed")
-                                tempDiscount = coupon.DiscountValue;
-
-                            if (coupon.MaxDiscountAmount.HasValue &&
-                                tempDiscount > coupon.MaxDiscountAmount.Value)
-                            {
-                                tempDiscount = coupon.MaxDiscountAmount.Value;
-                            }
-
-                            if (tempDiscount > bestDiscount)
-                                bestDiscount = tempDiscount;
+                            appliedCoupon = reader["code"]?.ToString();
                         }
                     }
-
-                    item.Discount = bestDiscount;
-
-                    total += itemTotal;
-                    totalDiscount += bestDiscount;
                 }
 
                 decimal finalAmount = total - totalDiscount;
@@ -638,7 +757,7 @@ namespace elemechWisetrack.DataBaseLayer
                     cmd.Parameters.AddWithValue("@pid", item.ProductId);
                     cmd.Parameters.AddWithValue("@qty", item.Quantity);
                     cmd.Parameters.AddWithValue("@price", item.Price);
-                    cmd.Parameters.AddWithValue("@discount", item.Discount);
+                    cmd.Parameters.AddWithValue("@discount", 0); // no per-product discount
 
                     await cmd.ExecuteNonQueryAsync();
                 }
@@ -667,7 +786,8 @@ namespace elemechWisetrack.DataBaseLayer
                     razorpayOrderId,
                     total,
                     discount = totalDiscount,
-                    finalAmount
+                    finalAmount,
+                    couponCode = appliedCoupon
                 };
             }
             catch (Exception ex)
