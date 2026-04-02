@@ -16,6 +16,7 @@ namespace elemechWisetrack.BusinessLayer
         Task<object> SchedulePickup(PickupRequestModel model);
         Task<object> CompleteExchange(Guid exchangeId);
         Task<object> UpdatePickupStatus(Guid exchangeId, string status);
+        Task<object> GetMyOrders(string email);
     }
 
     public partial interface IBusinessLayer : IBusinessLayer_Orders
@@ -77,6 +78,11 @@ namespace elemechWisetrack.BusinessLayer
         public async Task<object> UpdatePickupStatus(Guid exchangeId, string status)
         {
             return await _dataBaseLayer.UpdatePickupStatus(exchangeId, status);
+        }
+
+        public async Task<object> GetMyOrders(string email)
+        {
+            return await _dataBaseLayer.GetMyOrders(email);
         }
     }
 }

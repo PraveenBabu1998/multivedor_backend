@@ -53,7 +53,7 @@ namespace elemechWisetrack.Controllers
             return Ok(result);
         }
 
-        [HttpGet("my-orders")]
+        [HttpGet("orders-history")]
         public async Task<IActionResult> GetOrders()
         {
             string email = User.FindFirst(ClaimTypes.Email)?.Value ??
@@ -63,6 +63,24 @@ namespace elemechWisetrack.Controllers
             var data = await _businessLayer.GetUserOrders(email);
 
             return Ok(data);
+        }
+
+        [HttpGet("my-orders")]
+        public async Task<IActionResult> GetMyOrders()
+        {
+            // ✅ Get email from JWT token
+            string email = User.FindFirst(ClaimTypes.Email)?.Value ??
+                                   User.FindFirst("email")?.Value ??
+                                   User.FindFirst("UserName")?.Value;
+
+            if (string.IsNullOrEmpty(email))
+            {
+                return Unauthorized(new { success = false, message = "Invalid token" });
+            }
+
+            var result = await _businessLayer.GetMyOrders(email);
+
+            return Ok(result);
         }
 
         [HttpPost("cancel/{orderId}")]

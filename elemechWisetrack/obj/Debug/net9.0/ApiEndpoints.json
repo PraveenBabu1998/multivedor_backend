@@ -1224,8 +1224,18 @@
   },
   {
     "ContainingType": "elemechWisetrack.Controllers.OrdersController",
-    "Method": "GetOrders",
+    "Method": "GetMyOrders",
     "RelativePath": "api/orders/my-orders",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.OrdersController",
+    "Method": "GetOrders",
+    "RelativePath": "api/orders/orders-history",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,

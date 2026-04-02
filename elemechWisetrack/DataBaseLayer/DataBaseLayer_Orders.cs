@@ -18,6 +18,7 @@ namespace elemechWisetrack.DataBaseLayer
         Task<object> SchedulePickup(PickupRequestModel model);
         Task<object> CompleteExchange(Guid exchangeId);
         Task<object> UpdatePickupStatus(Guid exchangeId, string status);
+        Task<object> GetMyOrders(string email);
     }
     public partial interface IDataBaseLayer : IDataBaseLayer_Orders
     {
@@ -1562,6 +1563,137 @@ namespace elemechWisetrack.DataBaseLayer
             {
                 success = true,
                 message = "Pickup status updated"
+            };
+        }
+
+        public async Task<object> GetMyOrders(string email)
+        {
+            using var conn = new NpgsqlConnection(DbConnection);
+            await conn.OpenAsync();
+
+            // ============================
+            // 🔹 1. GET USER ID
+            // ============================
+            string userQuery = @"SELECT ""Id"" FROM ""AspNetUsers"" WHERE ""Email""=@Email LIMIT 1";
+
+            Guid userId;
+
+            using (var cmd = new NpgsqlCommand(userQuery, conn))
+            {
+                cmd.Parameters.AddWithValue("@Email", email);
+                var result = await cmd.ExecuteScalarAsync();
+
+                if (result == null)
+                    return new { success = false, message = "User not found" };
+
+                userId = Guid.Parse(result.ToString());
+            }
+
+            // ============================
+            // 🔹 2. GET ORDERS + ITEMS + ADDRESS
+            // ============================
+            string query = @"
+SELECT 
+    o.id AS order_id,
+    o.total_amount,
+    o.discount_amount,
+    o.final_amount,
+    o.payment_method,
+    o.payment_status,
+    o.order_status,
+    o.created_at,
+
+    -- Address
+    a.id AS address_id,
+    a.full_name,
+    a.phone_number,
+    a.address_line1,
+    a.address_line2,
+    a.city,
+    a.state,
+    a.postal_code,
+
+    -- Items
+    oi.product_id,
+    oi.quantity,
+    oi.price,
+    oi.discount,
+
+    p.name,
+    p.mainimage
+
+FROM orders o
+LEFT JOIN address_details a ON a.id = o.address_id
+LEFT JOIN order_items oi ON oi.order_id = o.id
+LEFT JOIN products p ON p.id = oi.product_id
+
+WHERE o.user_email = @email
+AND o.order_status != 'DELIVERED'
+
+ORDER BY o.created_at DESC";
+
+            using var cmd2 = new NpgsqlCommand(query, conn);
+            cmd2.Parameters.AddWithValue("@email", email);
+
+            using var reader = await cmd2.ExecuteReaderAsync();
+
+            var orderDict = new Dictionary<Guid, dynamic>();
+
+            while (await reader.ReadAsync())
+            {
+                var orderId = reader.GetGuid(0);
+
+                if (!orderDict.ContainsKey(orderId))
+                {
+                    orderDict[orderId] = new
+                    {
+                        OrderId = orderId,
+                        TotalAmount = reader.GetDecimal(1),
+                        Discount = reader.IsDBNull(2) ? 0 : reader.GetDecimal(2),
+                        FinalAmount = reader.GetDecimal(3),
+                        PaymentMethod = reader.GetString(4),
+                        PaymentStatus = reader.GetString(5),
+                        OrderStatus = reader.GetString(6),
+                        CreatedAt = reader.GetDateTime(7),
+
+                        Address = new
+                        {
+                            AddressId = reader.IsDBNull(8) ? Guid.Empty : reader.GetGuid(8),
+                            Name = reader.IsDBNull(9) ? null : reader.GetString(9),
+                            Phone = reader.IsDBNull(10) ? null : reader.GetString(10),
+                            AddressLine1 = reader.IsDBNull(11) ? null : reader.GetString(11),
+                            AddressLine2 = reader.IsDBNull(12) ? null : reader.GetString(12),
+                            City = reader.IsDBNull(13) ? null : reader.GetString(13),
+                            State = reader.IsDBNull(14) ? null : reader.GetString(14),
+                            Pincode = reader.IsDBNull(15) ? null : reader.GetString(15)
+                        },
+
+                        Items = new List<object>()
+                    };
+                }
+
+                // 🔹 Add items
+                if (!reader.IsDBNull(16))
+                {
+                    var item = new
+                    {
+                        ProductId = reader.GetGuid(16),
+                        Quantity = reader.GetInt32(17),
+                        Price = reader.GetDecimal(18),
+                        Discount = reader.IsDBNull(19) ? 0 : reader.GetDecimal(19),
+                        ProductName = reader.IsDBNull(20) ? null : reader.GetString(20),
+                        ProductImage = reader.IsDBNull(21) ? null : reader.GetString(21)
+                    };
+
+                    ((List<object>)orderDict[orderId].Items).Add(item);
+                }
+            }
+
+            return new
+            {
+                success = true,
+                count = orderDict.Count,
+                orders = orderDict.Values
             };
         }
     }
