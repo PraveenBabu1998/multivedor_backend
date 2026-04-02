@@ -25,8 +25,18 @@
         public string ProductImage { get; set; }
         public int Quantity { get; set; }
         public decimal Price { get; set; }
+        //public decimal Discountprice { get; set; }
         public decimal CurrentPrice { get; set; }
         public decimal Total { get; set; }
+        public decimal Discount { get; set; } = 0;
+    }
+
+    public class CouponModel
+    {
+        public string DiscountType { get; set; }
+        public decimal DiscountValue { get; set; }
+        public decimal MinOrderAmount { get; set; }
+        public decimal? MaxDiscountAmount { get; set; }
     }
 
     public class UpdateCartQuantityModel
