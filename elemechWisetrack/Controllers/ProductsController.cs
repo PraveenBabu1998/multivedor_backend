@@ -49,10 +49,34 @@ namespace elemechWisetrack.Controllers
         [Route("list")]
         [HttpGet]
         [AllowAnonymous]
-        public async Task<IActionResult> GetAllProducts(int? page, int? pageSize)
+        public async Task<IActionResult> GetAllProducts(
+    [FromQuery] int? page,
+    [FromQuery] int? pageSize,
+    [FromQuery] Guid? categoryId,
+    [FromQuery] Guid? subCategoryId,
+    [FromQuery] Guid? childCategoryId,
+    [FromQuery] Guid? brandId,
+    [FromQuery] string[]? colors,
+    [FromQuery] string[]? sizes,
+    [FromQuery] decimal? minPrice,
+    [FromQuery] decimal? maxPrice,
+    [FromQuery] string? search
+)
         {
-            var data = await _businessLayer.GetAllProducts(page, pageSize);
-            return Ok(new {Success = true, Message = "Product list successfully",data = data});
+            var data = await _businessLayer.GetAllProducts(
+                page, pageSize,
+                categoryId, subCategoryId, childCategoryId,
+                brandId, colors, sizes,
+                minPrice, maxPrice,
+                search
+            );
+
+            return Ok(new
+            {
+                success = true,
+                message = "Product list successfully",
+                data
+            });
         }
 
         [Route("get/{productId}")]
