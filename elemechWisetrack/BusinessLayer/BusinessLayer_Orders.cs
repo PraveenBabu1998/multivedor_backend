@@ -17,6 +17,9 @@ namespace elemechWisetrack.BusinessLayer
         Task<object> CompleteExchange(Guid exchangeId);
         Task<object> UpdatePickupStatus(Guid exchangeId, string status);
         Task<object> GetMyOrders(string email);
+        Task<object> UpdateOrderStatus(UpdateOrderStatusModel model);
+        Task<object> TrackOrder(Guid orderId);
+        Task<object> GetOrderDetails(string email, Guid orderId);
     }
 
     public partial interface IBusinessLayer : IBusinessLayer_Orders
@@ -83,6 +86,21 @@ namespace elemechWisetrack.BusinessLayer
         public async Task<object> GetMyOrders(string email)
         {
             return await _dataBaseLayer.GetMyOrders(email);
+        }
+
+        public async Task<object> UpdateOrderStatus(UpdateOrderStatusModel model)
+        {
+            return await _dataBaseLayer.UpdateOrderStatus(model);
+        }
+
+        public async Task<object> TrackOrder(Guid orderId)
+        {
+            return await _dataBaseLayer.TrackOrder(orderId);
+        }
+
+        public async Task<object> GetOrderDetails(string email, Guid orderId)
+        {
+            return await _dataBaseLayer.GetOrderDetails(email, orderId);
         }
     }
 }

@@ -19,6 +19,9 @@ namespace elemechWisetrack.DataBaseLayer
         Task<object> CompleteExchange(Guid exchangeId);
         Task<object> UpdatePickupStatus(Guid exchangeId, string status);
         Task<object> GetMyOrders(string email);
+        Task<object> UpdateOrderStatus(UpdateOrderStatusModel model);
+        Task<object> TrackOrder(Guid orderId);
+        Task<object> GetOrderDetails(string email, Guid orderId);
     }
     public partial interface IDataBaseLayer : IDataBaseLayer_Orders
     {
@@ -26,171 +29,6 @@ namespace elemechWisetrack.DataBaseLayer
 
     public partial class DataBaseLayer
     {
-
-        //    public async Task<object> GetCheckoutDetails(string email)
-        //    {
-        //        using var conn = new NpgsqlConnection(DbConnection);
-        //        await conn.OpenAsync();
-
-        //        // ============================
-        //        // 🔹 1. GET USER ID
-        //        // ============================
-        //        string getUserQuery = @"SELECT ""Id"" FROM ""AspNetUsers"" WHERE ""Email""=@Email LIMIT 1";
-        //        Guid userId;
-
-        //        using (var cmd = new NpgsqlCommand(getUserQuery, conn))
-        //        {
-        //            cmd.Parameters.AddWithValue("@Email", email);
-        //            var result = await cmd.ExecuteScalarAsync();
-        //            if (result == null)
-        //                return new { success = false, message = "User not found" };
-
-        //            userId = Guid.Parse(result.ToString());
-        //        }
-
-        //        // ============================
-        //        // 🔹 2. GET CART ITEMS
-        //        // ============================
-        //        List<CartProductDetail> cartItems = new();
-
-        //        string cartQuery = @"
-        //SELECT ci.product_id, ci.quantity, p.name, p.discountprice, p.mainimage
-        //FROM cart_items ci
-        //JOIN carts c ON c.id = ci.cart_id
-        //JOIN products p ON p.id = ci.product_id
-        //WHERE c.user_id = @userId";
-
-        //        using (var cmd = new NpgsqlCommand(cartQuery, conn))
-        //        {
-        //            cmd.Parameters.AddWithValue("@userId", userId);
-
-        //            using var reader = await cmd.ExecuteReaderAsync();
-        //            while (await reader.ReadAsync())
-        //            {
-        //                cartItems.Add(new CartProductDetail
-        //                {
-        //                    ProductId = reader.GetGuid(0),
-        //                    Quantity = reader.GetInt32(1),
-        //                    ProductName = reader.GetString(2),
-        //                    Price = reader.GetDecimal(3),
-        //                    Image = reader.IsDBNull(4) ? null : reader.GetString(4),
-        //                    Discount = 0 // ✅ ADD THIS PROPERTY IN MODEL
-        //                });
-        //            }
-        //        }
-
-        //        // ============================
-        //        // 🔹 3. FETCH COUPONS
-        //        // ============================
-        //        decimal totalAmount = cartItems.Sum(x => x.Price * x.Quantity);
-        //        decimal totalDiscount = 0;
-
-        //        if (cartItems.Count > 0)
-        //        {
-        //            var productIds = cartItems.Select(x => x.ProductId).ToArray();
-
-        //            string couponQuery = @"
-        //    SELECT cu.product_id,
-        //           c.discount_type,
-        //           c.discount_value,
-        //           c.min_order_amount,
-        //           c.max_discount_amount
-        //    FROM coupon_usage cu
-        //    JOIN coupons c ON c.id = cu.coupon_id
-        //    WHERE cu.user_email = @user_email
-        //    AND cu.product_id = ANY(@product_ids)
-        //    AND c.is_active = TRUE
-        //    AND c.start_date <= NOW()
-        //    AND c.end_date >= NOW()";
-
-        //            using var couponCmd = new NpgsqlCommand(couponQuery, conn);
-        //            couponCmd.Parameters.AddWithValue("@user_email", email);
-        //            couponCmd.Parameters.AddWithValue("@product_ids", productIds);
-
-        //            using var couponReader = await couponCmd.ExecuteReaderAsync();
-
-        //            var couponMap = new Dictionary<Guid, List<CouponModel>>();
-
-        //            while (await couponReader.ReadAsync())
-        //            {
-        //                var productId = couponReader.GetGuid(0);
-
-        //                var coupon = new CouponModel
-        //                {
-        //                    DiscountType = couponReader["discount_type"]?.ToString(),
-        //                    DiscountValue = Convert.ToDecimal(couponReader["discount_value"]),
-        //                    MinOrderAmount = Convert.ToDecimal(couponReader["min_order_amount"]),
-        //                    MaxDiscountAmount = couponReader["max_discount_amount"] == DBNull.Value
-        //                        ? (decimal?)null
-        //                        : Convert.ToDecimal(couponReader["max_discount_amount"])
-        //                };
-
-        //                if (!couponMap.ContainsKey(productId))
-        //                    couponMap[productId] = new List<CouponModel>();
-
-        //                couponMap[productId].Add(coupon);
-        //            }
-
-        //            await couponReader.CloseAsync();
-
-        //            // ============================
-        //            // 🔹 4. APPLY BEST COUPON PER PRODUCT
-        //            // ============================
-        //            foreach (var item in cartItems)
-        //            {
-        //                decimal itemTotal = item.Price * item.Quantity;
-
-        //                if (!couponMap.ContainsKey(item.ProductId))
-        //                    continue;
-
-        //                decimal bestDiscount = 0;
-
-        //                foreach (var coupon in couponMap[item.ProductId])
-        //                {
-        //                    if (itemTotal < coupon.MinOrderAmount)
-        //                        continue;
-
-        //                    decimal tempDiscount = 0;
-
-        //                    if (coupon.DiscountType == "percentage")
-        //                    {
-        //                        tempDiscount = (itemTotal * coupon.DiscountValue) / 100;
-        //                    }
-        //                    else if (coupon.DiscountType == "fixed")
-        //                    {
-        //                        tempDiscount = coupon.DiscountValue;
-        //                    }
-
-        //                    if (coupon.MaxDiscountAmount.HasValue &&
-        //                        tempDiscount > coupon.MaxDiscountAmount.Value)
-        //                    {
-        //                        tempDiscount = coupon.MaxDiscountAmount.Value;
-        //                    }
-
-        //                    if (tempDiscount > bestDiscount)
-        //                        bestDiscount = tempDiscount;
-        //                }
-
-        //                item.Discount = bestDiscount;
-        //                totalDiscount += bestDiscount;
-        //            }
-        //        }
-
-        //        decimal finalAmount = totalAmount - totalDiscount;
-
-        //        // ============================
-        //        // 🔹 RESPONSE
-        //        // ============================
-        //        return new
-        //        {
-        //            UserId = userId,
-        //            Email = email,
-        //            CartItems = cartItems,
-        //            TotalAmount = totalAmount,
-        //            Discount = totalDiscount,
-        //            FinalAmount = finalAmount
-        //        };
-        //    }
 
         public async Task<object> GetCheckoutDetails(string email, string couponCode)
         {
@@ -346,265 +184,6 @@ namespace elemechWisetrack.DataBaseLayer
                 FinalAmount = finalAmount
             };
         }
-
-        //public async Task<object> CreateOrder(string email, CreateOrderModel model)
-        //{
-        //    using var conn = new NpgsqlConnection(DbConnection);
-        //    await conn.OpenAsync();
-
-        //    using var transaction = await conn.BeginTransactionAsync();
-
-        //    try
-        //    {
-        //        // ============================
-        //        // 🔹 1. GET USER ID
-        //        // ============================
-        //        string getUserQuery = @"SELECT ""Id"" FROM ""AspNetUsers"" WHERE ""Email""=@Email LIMIT 1";
-
-        //        Guid userId;
-
-        //        using (var cmd = new NpgsqlCommand(getUserQuery, conn, transaction))
-        //        {
-        //            cmd.Parameters.AddWithValue("@Email", email);
-        //            var result = await cmd.ExecuteScalarAsync();
-
-        //            if (result == null)
-        //                return new { success = false, message = "User not found" };
-
-        //            userId = Guid.Parse(result.ToString());
-        //        }
-
-        //        // ============================
-        //        // 🔹 2. VALIDATE ITEMS
-        //        // ============================
-        //        if (model.Items == null || !model.Items.Any())
-        //            return new { success = false, message = "No items provided" };
-
-        //        var cartItems = new List<OrderItemModel>();
-
-        //        foreach (var item in model.Items)
-        //        {
-        //            string productQuery = "SELECT discountprice FROM products WHERE id=@pid";
-
-        //            using var cmd = new NpgsqlCommand(productQuery, conn, transaction);
-        //            cmd.Parameters.AddWithValue("@pid", item.ProductId);
-
-        //            var result = await cmd.ExecuteScalarAsync();
-
-        //            if (result == null)
-        //                return new { success = false, message = "Invalid product" };
-
-        //            decimal price = (decimal)result;
-
-        //            cartItems.Add(new OrderItemModel
-        //            {
-        //                ProductId = item.ProductId,
-        //                Quantity = item.Quantity,
-        //                Price = price,
-        //                Discount = 0
-        //            });
-        //        }
-
-        //        // ============================
-        //        // 🔹 3. FETCH COUPONS
-        //        // ============================
-        //        var productIds = cartItems.Select(x => x.ProductId).ToArray();
-
-        //        string couponQuery = @"
-        //SELECT cu.product_id,
-        //       c.discount_type,
-        //       c.discount_value,
-        //       c.min_order_amount,
-        //       c.max_discount_amount
-        //FROM coupon_usage cu
-        //JOIN coupons c ON c.id = cu.coupon_id
-        //WHERE cu.user_email = @user_email
-        //AND cu.product_id = ANY(@product_ids)
-        //AND c.is_active = TRUE
-        //AND c.start_date <= NOW()
-        //AND c.end_date >= NOW()";
-
-        //        var couponMap = new Dictionary<Guid, List<CouponModel>>();
-
-        //        using (var cmd = new NpgsqlCommand(couponQuery, conn, transaction))
-        //        {
-        //            cmd.Parameters.AddWithValue("@user_email", email);
-        //            cmd.Parameters.AddWithValue("@product_ids", productIds);
-
-        //            using var reader = await cmd.ExecuteReaderAsync();
-
-        //            while (await reader.ReadAsync())
-        //            {
-        //                var productId = reader.GetGuid(0);
-
-        //                var coupon = new CouponModel
-        //                {
-        //                    DiscountType = reader["discount_type"]?.ToString(),
-        //                    DiscountValue = Convert.ToDecimal(reader["discount_value"]),
-        //                    MinOrderAmount = Convert.ToDecimal(reader["min_order_amount"]),
-        //                    MaxDiscountAmount = reader["max_discount_amount"] == DBNull.Value
-        //                        ? (decimal?)null
-        //                        : Convert.ToDecimal(reader["max_discount_amount"])
-        //                };
-
-        //                if (!couponMap.ContainsKey(productId))
-        //                    couponMap[productId] = new List<CouponModel>();
-
-        //                couponMap[productId].Add(coupon);
-        //            }
-        //        }
-
-        //        // ============================
-        //        // 🔹 4. APPLY COUPON PER PRODUCT
-        //        // ============================
-        //        decimal total = 0;
-        //        decimal totalDiscount = 0;
-
-        //        foreach (var item in cartItems)
-        //        {
-        //            decimal itemTotal = item.Price * item.Quantity;
-        //            decimal bestDiscount = 0;
-
-        //            if (couponMap.ContainsKey(item.ProductId))
-        //            {
-        //                foreach (var coupon in couponMap[item.ProductId])
-        //                {
-        //                    if (itemTotal < coupon.MinOrderAmount)
-        //                        continue;
-
-        //                    decimal tempDiscount = 0;
-
-        //                    if (coupon.DiscountType == "percentage")
-        //                        tempDiscount = (itemTotal * coupon.DiscountValue) / 100;
-        //                    else if (coupon.DiscountType == "fixed")
-        //                        tempDiscount = coupon.DiscountValue;
-
-        //                    if (coupon.MaxDiscountAmount.HasValue &&
-        //                        tempDiscount > coupon.MaxDiscountAmount.Value)
-        //                    {
-        //                        tempDiscount = coupon.MaxDiscountAmount.Value;
-        //                    }
-
-        //                    if (tempDiscount > bestDiscount)
-        //                        bestDiscount = tempDiscount;
-        //                }
-        //            }
-
-        //            item.Discount = bestDiscount;
-
-        //            total += itemTotal;
-        //            totalDiscount += bestDiscount;
-        //        }
-
-        //        decimal finalAmount = total - totalDiscount;
-
-        //        // ============================
-        //        // 🔹 5. CREATE RAZORPAY ORDER
-        //        // ============================
-        //        string razorpayOrderId = null;
-
-        //        if (model.PaymentMethod == "RAZORPAY")
-        //        {
-        //            var client = new RazorpayClient(_key, _secret);
-
-        //            var options = new Dictionary<string, object>
-        //    {
-        //        { "amount", (int)(finalAmount * 100) }, // ✅ after discount
-        //        { "currency", "INR" },
-        //        { "receipt", Guid.NewGuid().ToString() }
-        //    };
-
-        //            var order = client.Order.Create(options);
-        //            razorpayOrderId = order["id"].ToString();
-        //        }
-
-        //        // ============================
-        //        // 🔹 6. INSERT ORDER
-        //        // ============================
-        //        string insertOrder = @"
-        //INSERT INTO orders 
-        //(user_email, address_id, total_amount, discount_amount, final_amount,
-        // payment_method, payment_status, order_status, razorpay_order_id)
-        //VALUES (@email, @address, @total, @discount, @final,
-        //        @method, @paymentStatus, @status, @razorpayId)
-        //RETURNING id";
-
-        //        Guid orderId;
-
-        //        using (var cmd = new NpgsqlCommand(insertOrder, conn, transaction))
-        //        {
-        //            cmd.Parameters.AddWithValue("@email", email);
-        //            cmd.Parameters.AddWithValue("@address", model.AddressId);
-        //            cmd.Parameters.AddWithValue("@total", total);
-        //            cmd.Parameters.AddWithValue("@discount", totalDiscount);
-        //            cmd.Parameters.AddWithValue("@final", finalAmount);
-        //            cmd.Parameters.AddWithValue("@method", model.PaymentMethod);
-        //            cmd.Parameters.AddWithValue("@paymentStatus",
-        //                model.PaymentMethod == "COD" ? "SUCCESS" : "PENDING");
-        //            cmd.Parameters.AddWithValue("@status", "PLACED");
-        //            cmd.Parameters.AddWithValue("@razorpayId", (object?)razorpayOrderId ?? DBNull.Value);
-
-        //            orderId = (Guid)await cmd.ExecuteScalarAsync();
-        //        }
-
-        //        // ============================
-        //        // 🔹 7. INSERT ORDER ITEMS
-        //        // ============================
-        //        foreach (var item in cartItems)
-        //        {
-        //            string itemQuery = @"
-        //    INSERT INTO order_items 
-        //    (order_id, product_id, quantity, price, discount)
-        //    VALUES (@oid, @pid, @qty, @price, @discount)";
-
-        //            using var cmd = new NpgsqlCommand(itemQuery, conn, transaction);
-        //            cmd.Parameters.AddWithValue("@oid", orderId);
-        //            cmd.Parameters.AddWithValue("@pid", item.ProductId);
-        //            cmd.Parameters.AddWithValue("@qty", item.Quantity);
-        //            cmd.Parameters.AddWithValue("@price", item.Price);
-        //            cmd.Parameters.AddWithValue("@discount", item.Discount);
-
-        //            await cmd.ExecuteNonQueryAsync();
-        //        }
-
-        //        // ============================
-        //        // 🔹 8. CLEAR CART
-        //        // ============================
-        //        string clearCart = @"
-        //DELETE FROM cart_items ci
-        //USING carts c
-        //WHERE ci.cart_id = c.id
-        //AND c.user_id = @userId";
-
-        //        using (var cmd = new NpgsqlCommand(clearCart, conn, transaction))
-        //        {
-        //            cmd.Parameters.AddWithValue("@userId", userId);
-        //            await cmd.ExecuteNonQueryAsync();
-        //        }
-
-        //        await transaction.CommitAsync();
-
-        //        return new
-        //        {
-        //            success = true,
-        //            orderId,
-        //            razorpayOrderId,
-        //            total,
-        //            discount = totalDiscount,
-        //            finalAmount
-        //        };
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        await transaction.RollbackAsync();
-
-        //        return new
-        //        {
-        //            success = false,
-        //            message = ex.Message
-        //        };
-        //    }
-        //}
 
         public async Task<object> CreateOrder(string email, CreateOrderModel model)
         {
@@ -1694,6 +1273,261 @@ ORDER BY o.created_at DESC";
                 success = true,
                 count = orderDict.Count,
                 orders = orderDict.Values
+            };
+        }
+
+        public async Task<object> UpdateOrderStatus(UpdateOrderStatusModel model)
+        {
+            using var conn = new NpgsqlConnection(DbConnection);
+            await conn.OpenAsync();
+
+            var validStatuses = new List<string>
+    {
+        "PLACED",
+        "CONFIRMED",
+        "SHIPPED",
+        "OUT_FOR_DELIVERY",
+        "DELIVERED",
+        "CANCELLED"
+    };
+
+            if (!validStatuses.Contains(model.Status))
+            {
+                return new { success = false, message = "Invalid order status" };
+            }
+
+            // 🔹 Get current status
+            string getQuery = @"SELECT order_status FROM orders WHERE id=@id";
+
+            string currentStatus;
+
+            using (var cmd = new NpgsqlCommand(getQuery, conn))
+            {
+                cmd.Parameters.AddWithValue("@id", model.OrderId);
+
+                var result = await cmd.ExecuteScalarAsync();
+
+                if (result == null)
+                    return new { success = false, message = "Order not found" };
+
+                currentStatus = result.ToString();
+            }
+
+            // ❌ Prevent update if completed
+            if (currentStatus == "DELIVERED" || currentStatus == "CANCELLED")
+            {
+                return new
+                {
+                    success = false,
+                    message = $"Order already {currentStatus}"
+                };
+            }
+
+            // 🔹 Update order
+            string updateQuery = @"
+        UPDATE orders
+        SET order_status = @status
+        WHERE id = @id";
+
+            using (var cmd = new NpgsqlCommand(updateQuery, conn))
+            {
+                cmd.Parameters.AddWithValue("@status", model.Status);
+                cmd.Parameters.AddWithValue("@id", model.OrderId);
+
+                await cmd.ExecuteNonQueryAsync();
+            }
+
+            // 🔥 SAVE EMAIL HERE
+            string historyQuery = @"
+        INSERT INTO order_status_history(order_id, status, updated_by_email)
+        VALUES(@orderId, @status, @email)";
+
+            using (var cmd = new NpgsqlCommand(historyQuery, conn))
+            {
+                cmd.Parameters.AddWithValue("@orderId", model.OrderId);
+                cmd.Parameters.AddWithValue("@status", model.Status);
+                cmd.Parameters.AddWithValue("@email", model.UpdatedByEmail);
+
+                await cmd.ExecuteNonQueryAsync();
+            }
+
+            return new
+            {
+                success = true,
+                message = $"Order status updated to {model.Status}"
+            };
+        }
+
+        public async Task<object> TrackOrder(Guid orderId)
+        {
+            using var conn = new NpgsqlConnection(DbConnection);
+            await conn.OpenAsync();
+
+            // 🔹 ORDER DETAILS
+            string orderQuery = @"
+        SELECT 
+            id,
+            order_status,
+            payment_status,
+            created_at
+        FROM orders
+        WHERE id = @id";
+
+            using var cmd = new NpgsqlCommand(orderQuery, conn);
+            cmd.Parameters.AddWithValue("@id", orderId);
+
+            using var reader = await cmd.ExecuteReaderAsync();
+
+            if (!await reader.ReadAsync())
+            {
+                return new { success = false, message = "Order not found" };
+            }
+
+            var order = new
+            {
+                OrderId = reader.GetGuid(0),
+                Status = reader.GetString(1),
+                PaymentStatus = reader.GetString(2),
+                CreatedAt = reader.GetDateTime(3)
+            };
+
+            await reader.CloseAsync();
+
+            // 🔹 STATUS HISTORY
+            string historyQuery = @"
+        SELECT status, created_at
+        FROM order_status_history
+        WHERE order_id = @id
+        ORDER BY created_at ASC";
+
+            var history = new List<object>();
+
+            using var cmd2 = new NpgsqlCommand(historyQuery, conn);
+            cmd2.Parameters.AddWithValue("@id", orderId);
+
+            using var reader2 = await cmd2.ExecuteReaderAsync();
+
+            while (await reader2.ReadAsync())
+            {
+                history.Add(new
+                {
+                    Status = reader2.GetString(0),
+                    Time = reader2.GetDateTime(1)
+                });
+            }
+
+            return new
+            {
+                success = true,
+                order,
+                tracking = history
+            };
+        }
+
+        public async Task<object> GetOrderDetails(string email, Guid orderId)
+        {
+            using var conn = new NpgsqlConnection(DbConnection);
+            await conn.OpenAsync();
+
+            OrderDetailsResponse order = null;
+
+            // ============================
+            // 🔹 1. ORDER + ADDRESS + PAYMENT
+            // ============================
+            using (var cmd = new NpgsqlCommand(@"
+        SELECT 
+            o.id, o.total_amount, o.discount_amount, o.final_amount,
+            o.payment_method, o.payment_status, o.order_status,
+            o.coupon_code, o.created_at,
+            o.razorpay_order_id, o.razorpay_payment_id, o.razorpay_signature,
+            a.id, a.full_name, a.phone_number,
+            a.address_line1, a.address_line2, a.city, a.state, a.postal_code
+        FROM orders o
+        LEFT JOIN address_details a ON a.id = o.address_id
+        WHERE o.id = @orderId", conn))   // ✅ removed email filter
+            {
+                cmd.Parameters.AddWithValue("@orderId", orderId);
+
+                using var reader = await cmd.ExecuteReaderAsync();
+
+                if (!await reader.ReadAsync())
+                    return new { success = false, message = "Order not found" };
+
+                order = new OrderDetailsResponse
+                {
+                    OrderId = reader.GetGuid(0),
+                    TotalAmount = reader.GetDecimal(1),
+                    Discount = reader.IsDBNull(2) ? 0 : reader.GetDecimal(2),
+                    FinalAmount = reader.GetDecimal(3),
+
+                    PaymentMethod = reader.GetString(4),
+                    PaymentStatus = reader.GetString(5),
+                    OrderStatus = reader.GetString(6),
+
+                    CouponCode = reader.IsDBNull(7) ? null : reader.GetString(7),
+                    CreatedAt = reader.GetDateTime(8),
+
+                    Payment = new PaymentModel
+                    {
+                        RazorpayOrderId = reader.IsDBNull(9) ? null : reader.GetString(9),
+                        RazorpayPaymentId = reader.IsDBNull(10) ? null : reader.GetString(10),
+                        RazorpaySignature = reader.IsDBNull(11) ? null : reader.GetString(11),
+                        Status = reader.GetString(5),
+                        Method = reader.GetString(4)
+                    },
+
+                    Address = new AddressModel
+                    {
+                        AddressId = reader.IsDBNull(12) ? Guid.Empty : reader.GetGuid(12),
+                        Name = reader.IsDBNull(13) ? null : reader.GetString(13),
+                        Phone = reader.IsDBNull(14) ? null : reader.GetString(14),
+                        AddressLine1 = reader.IsDBNull(15) ? null : reader.GetString(15),
+                        AddressLine2 = reader.IsDBNull(16) ? null : reader.GetString(16),
+                        City = reader.IsDBNull(17) ? null : reader.GetString(17),
+                        State = reader.IsDBNull(18) ? null : reader.GetString(18),
+                        Pincode = reader.IsDBNull(19) ? null : reader.GetString(19)
+                    }
+                };
+            }
+
+            // ============================
+            // 🔹 2. ORDER ITEMS
+            // ============================
+            using (var cmd2 = new NpgsqlCommand(@"
+        SELECT oi.product_id, oi.quantity, oi.price, oi.discount,
+               p.name, p.mainimage, p.description, p.price
+        FROM order_items oi
+        LEFT JOIN products p ON p.id = oi.product_id
+        WHERE oi.order_id = @orderId", conn))
+            {
+                cmd2.Parameters.AddWithValue("@orderId", orderId);
+
+                using var reader2 = await cmd2.ExecuteReaderAsync();
+
+                while (await reader2.ReadAsync())
+                {
+                    order.Items.Add(new OrderItemModelResponse
+                    {
+                        ProductId = reader2.GetGuid(0),
+                        Quantity = reader2.GetInt32(1),
+                        Price = reader2.GetDecimal(2),
+                        Discount = reader2.IsDBNull(3) ? 0 : reader2.GetDecimal(3),
+
+                        ProductName = reader2.IsDBNull(4) ? null : reader2.GetString(4),
+                        ProductImage = reader2.IsDBNull(5) ? null : reader2.GetString(5),
+                        Description = reader2.IsDBNull(6) ? null : reader2.GetString(6),
+                        ProductPrice = reader2.IsDBNull(7) ? 0 : reader2.GetDecimal(7)
+                    });
+                }
+            }
+
+            // ============================
+            // 🔹 FINAL RESPONSE
+            // ============================
+            return new
+            {
+                success = true,
+                order
             };
         }
     }

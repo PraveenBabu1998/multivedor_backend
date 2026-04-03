@@ -155,5 +155,36 @@ namespace elemechWisetrack.Controllers
             var result = await _businessLayer.UpdatePickupStatus(model.ExchangeId, model.Status);
             return Ok(result);
         }
+
+        [HttpPost("update-order-status")]
+        public async Task<IActionResult> UpdateOrderStatus(UpdateOrderStatusModel model)
+        {
+            var email = User.FindFirst(ClaimTypes.Email)?.Value ??
+                                   User.FindFirst("email")?.Value ??
+                                   User.FindFirst("UserName")?.Value; // or from JWT claim
+
+            model.UpdatedByEmail = email;
+
+            var result = await _businessLayer.UpdateOrderStatus(model);
+            return Ok(result);
+        }
+
+        [HttpGet("track-order/{orderId}")]
+        public async Task<IActionResult> TrackOrder(Guid orderId)
+        {
+            var result = await _businessLayer.TrackOrder(orderId);
+            return Ok(result);
+        }
+
+        [HttpGet("order-details/{orderId}")]
+        public async Task<IActionResult> GetOrderDetails(Guid orderId)
+        {
+            var email = User.FindFirst(ClaimTypes.Email)?.Value ??
+                                   User.FindFirst("email")?.Value ??
+                                   User.FindFirst("UserName")?.Value; // or claim
+
+            var result = await _businessLayer.GetOrderDetails(email, orderId);
+            return Ok(result);
+        }
     }
 }

@@ -1234,12 +1234,60 @@
   },
   {
     "ContainingType": "elemechWisetrack.Controllers.OrdersController",
+    "Method": "GetOrderDetails",
+    "RelativePath": "api/orders/order-details/{orderId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "orderId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.OrdersController",
     "Method": "GetOrders",
     "RelativePath": "api/orders/orders-history",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
     "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.OrdersController",
+    "Method": "TrackOrder",
+    "RelativePath": "api/orders/track-order/{orderId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "orderId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.OrdersController",
+    "Method": "UpdateOrderStatus",
+    "RelativePath": "api/orders/update-order-status",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "elemechWisetrack.Models.UpdateOrderStatusModel",
+        "IsRequired": true
+      }
+    ],
     "ReturnTypes": []
   },
   {
