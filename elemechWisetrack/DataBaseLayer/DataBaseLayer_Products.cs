@@ -265,92 +265,76 @@ namespace elemechWisetrack.DataBaseLayer
     string[]? sizes,
     decimal? minPrice,
     decimal? maxPrice,
-    string? search)
+    string? search
+)
         {
             try
             {
-                int basePage = page.HasValue && page.Value > 0 ? page.Value : 1;
-                int basePageSize = pageSize.HasValue && pageSize.Value > 0 ? pageSize.Value : 100;
+                int basePage = page ?? 1;
+                int basePageSize = pageSize ?? 10;
                 int offset = (basePage - 1) * basePageSize;
 
                 using var conn = new NpgsqlConnection(DbConnection);
                 await conn.OpenAsync();
 
                 string where = "WHERE p.isdeleted = FALSE ";
-                var baseParams = new List<NpgsqlParameter>();
+                var parameters = new List<NpgsqlParameter>();
 
-                // ✅ FILTERS
+                // ============================
+                // 🔹 FILTERS
+                // ============================
 
                 if (categoryId.HasValue)
                 {
                     where += " AND p.categoryid = @categoryId ";
-                    baseParams.Add(new NpgsqlParameter("@categoryId", categoryId));
+                    parameters.Add(new NpgsqlParameter("@categoryId", categoryId));
                 }
 
                 if (subCategoryId.HasValue)
                 {
                     where += " AND p.subcategoryid = @subCategoryId ";
-                    baseParams.Add(new NpgsqlParameter("@subCategoryId", subCategoryId));
-                }
-
-                if (childCategoryId.HasValue)
-                {
-                    where += " AND p.childcategoryid = @childCategoryId ";
-                    baseParams.Add(new NpgsqlParameter("@childCategoryId", childCategoryId));
+                    parameters.Add(new NpgsqlParameter("@subCategoryId", subCategoryId));
                 }
 
                 if (brandId.HasValue)
                 {
                     where += " AND p.brandid = @brandId ";
-                    baseParams.Add(new NpgsqlParameter("@brandId", brandId));
+                    parameters.Add(new NpgsqlParameter("@brandId", brandId));
                 }
 
                 if (colors != null && colors.Length > 0)
                 {
                     where += " AND col.name = ANY(@colors) ";
-                    baseParams.Add(new NpgsqlParameter("@colors", colors));
+                    parameters.Add(new NpgsqlParameter("@colors", colors));
                 }
 
                 if (sizes != null && sizes.Length > 0)
                 {
                     where += " AND s.name = ANY(@sizes) ";
-                    baseParams.Add(new NpgsqlParameter("@sizes", sizes));
+                    parameters.Add(new NpgsqlParameter("@sizes", sizes));
                 }
 
                 if (minPrice.HasValue)
                 {
                     where += " AND COALESCE(p.discountprice, p.price) >= @minPrice ";
-                    baseParams.Add(new NpgsqlParameter("@minPrice", minPrice));
+                    parameters.Add(new NpgsqlParameter("@minPrice", minPrice));
                 }
 
                 if (maxPrice.HasValue)
                 {
                     where += " AND COALESCE(p.discountprice, p.price) <= @maxPrice ";
-                    baseParams.Add(new NpgsqlParameter("@maxPrice", maxPrice));
+                    parameters.Add(new NpgsqlParameter("@maxPrice", maxPrice));
                 }
 
-                // ✅ SEARCH
                 if (!string.IsNullOrWhiteSpace(search))
                 {
-                    var words = search.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-                    int i = 0;
-                    foreach (var word in words)
-                    {
-                        string param = $"@search{i}";
-                        where += $@"
-                AND (
-                    LOWER(p.name) LIKE LOWER({param})
-                    OR LOWER(p.description) LIKE LOWER({param})
-                    OR LOWER(p.shortdescription) LIKE LOWER({param})
-                )";
-
-                        baseParams.Add(new NpgsqlParameter(param, $"%{word}%"));
-                        i++;
-                    }
+                    where += " AND LOWER(p.name) LIKE LOWER(@search) ";
+                    parameters.Add(new NpgsqlParameter("@search", $"%{search}%"));
                 }
 
-                // ✅ COUNT QUERY
+                // ============================
+                // 🔹 COUNT
+                // ============================
                 string countQuery = $@"
         SELECT COUNT(DISTINCT p.id)
         FROM products p
@@ -358,35 +342,52 @@ namespace elemechWisetrack.DataBaseLayer
         LEFT JOIN colors col ON pc.colorid = col.id
         LEFT JOIN product_sizes ps ON p.id = ps.product_id
         LEFT JOIN sizes s ON ps.size_id = s.id
-        {where};
-        ";
+        {where};";
 
                 int totalRecords;
+
                 using (var countCmd = new NpgsqlCommand(countQuery, conn))
                 {
-                    foreach (var p in baseParams)
-                    {
+                    foreach (var p in parameters)
                         countCmd.Parameters.Add(new NpgsqlParameter(p.ParameterName, p.Value));
-                    }
 
                     totalRecords = Convert.ToInt32(await countCmd.ExecuteScalarAsync());
                 }
 
-                // ✅ MAIN QUERY
+                // ============================
+                // 🔹 MAIN QUERY (NO IMAGE TABLE)
+                // ============================
                 string query = $@"
-SELECT p.*,
-       COALESCE(ARRAY_AGG(DISTINCT col.name), '{{}}') AS colors,
-       COALESCE(ARRAY_AGG(DISTINCT s.name), '{{}}') AS sizes
+SELECT p.*, 
+       c.name AS category_name,
+       sc.name AS subcategory_name,
+       b.name AS brand_name,
+
+       COALESCE(
+           ARRAY_AGG(DISTINCT col.name) 
+           FILTER (WHERE col.id IS NOT NULL), '{{}}'
+       ) AS colors,
+
+       COALESCE(
+           ARRAY_AGG(DISTINCT s.name) 
+           FILTER (WHERE s.id IS NOT NULL), '{{}}'
+       ) AS sizes
 
 FROM products p
+
+LEFT JOIN categories c ON p.categoryid = c.id
+LEFT JOIN categories sc ON p.subcategoryid = sc.id
+LEFT JOIN brands b ON p.brandid = b.id
+
 LEFT JOIN product_colors pc ON p.id = pc.productid
 LEFT JOIN colors col ON pc.colorid = col.id
+
 LEFT JOIN product_sizes ps ON p.id = ps.product_id
 LEFT JOIN sizes s ON ps.size_id = s.id
 
 {where}
 
-GROUP BY p.id
+GROUP BY p.id, c.name, sc.name, b.name
 ORDER BY p.createddate DESC
 LIMIT @pageSize OFFSET @offset;
 ";
@@ -395,10 +396,8 @@ LIMIT @pageSize OFFSET @offset;
 
                 using (var cmd = new NpgsqlCommand(query, conn))
                 {
-                    foreach (var p in baseParams)
-                    {
+                    foreach (var p in parameters)
                         cmd.Parameters.Add(new NpgsqlParameter(p.ParameterName, p.Value));
-                    }
 
                     cmd.Parameters.AddWithValue("@pageSize", basePageSize);
                     cmd.Parameters.AddWithValue("@offset", offset);
@@ -407,15 +406,59 @@ LIMIT @pageSize OFFSET @offset;
 
                     while (await reader.ReadAsync())
                     {
+                        string mainImage = reader["MainImage"]?.ToString();
+
                         list.Add(new
                         {
                             Id = reader["Id"],
                             Name = reader["Name"]?.ToString(),
-                            Price = reader["Price"],
-                            DiscountPrice = reader["DiscountPrice"] == DBNull.Value ? null : reader["DiscountPrice"],
+                            Slug = reader["Slug"]?.ToString(),
+
+                            ShortDescription = reader["ShortDescription"]?.ToString(),
+                            Description = reader["Description"]?.ToString(),
+
+                            CategoryId = reader["CategoryId"],
+                            SubCategoryId = reader["SubCategoryId"] == DBNull.Value ? null : reader["SubCategoryId"],
+                            BrandId = reader["BrandId"] == DBNull.Value ? null : reader["BrandId"],
+
+                            CategoryName = reader["category_name"]?.ToString(),
+                            SubCategoryName = reader["subcategory_name"]?.ToString(),
+                            BrandName = reader["brand_name"]?.ToString(),
+
                             Colors = reader["colors"] == DBNull.Value ? new string[] { } : (string[])reader["colors"],
                             Sizes = reader["sizes"] == DBNull.Value ? new string[] { } : (string[])reader["sizes"],
-                            Image = reader["MainImage"]?.ToString()
+
+                            Price = reader["Price"],
+                            DiscountPrice = reader["DiscountPrice"] == DBNull.Value ? null : reader["DiscountPrice"],
+                            CostPrice = reader["CostPrice"] == DBNull.Value ? null : reader["CostPrice"],
+
+                            TaxPercentage = reader["TaxPercentage"] == DBNull.Value ? null : reader["TaxPercentage"],
+
+                            SKU = reader["SKU"]?.ToString(),
+
+                            StockQuantity = reader["StockQuantity"],
+                            MinStockQuantity = reader["MinStockQuantity"] == DBNull.Value ? null : reader["MinStockQuantity"],
+                            TrackInventory = reader["TrackInventory"],
+
+                            // ✅ IMAGE FIX
+                            MainImage = mainImage,
+                            GalleryImages = string.IsNullOrEmpty(mainImage)
+                                ? new string[] { }
+                                : new string[] { mainImage },
+
+                            Weight = reader["Weight"] == DBNull.Value ? null : reader["Weight"],
+                            Length = reader["Length"] == DBNull.Value ? null : reader["Length"],
+                            Width = reader["Width"] == DBNull.Value ? null : reader["Width"],
+                            Height = reader["Height"] == DBNull.Value ? null : reader["Height"],
+
+                            MetaTitle = reader["MetaTitle"]?.ToString(),
+                            MetaDescription = reader["MetaDescription"]?.ToString(),
+                            MetaKeywords = reader["MetaKeywords"]?.ToString(),
+
+                            IsActive = reader["IsActive"],
+                            IsFeatured = reader["IsFeatured"],
+
+                            CreatedDate = reader["CreatedDate"]
                         });
                     }
                 }
@@ -439,7 +482,6 @@ LIMIT @pageSize OFFSET @offset;
                 };
             }
         }
-
         public async Task<object> GetProductById(Guid productId)
         {
             try
