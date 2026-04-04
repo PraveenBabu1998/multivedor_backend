@@ -4,33 +4,60 @@ namespace elemechWisetrack.DataBaseLayer
 {
     public interface IDataBaseLayer_User
     {
-        Task<object> AddWishListProduct(string productId, string email);
-        Task<object> GetWishListProduct(string email);
-        Task<object> DeleteWishListProduct(string productId, string email);
+        Task<object> AddWishListProduct(string productId, string email, string ipAddress);
+        Task<object> GetWishListProduct(string email, string ipAddress);
+        Task<object> DeleteWishListProduct(string productId, string email, string ipAddress);
     }
 
     public partial interface IDataBaseLayer : IDataBaseLayer_User { }
 
     public partial class DataBaseLayer
     {
-        public async Task<object> AddWishListProduct(string productId, string email)
+        // ✅ ADD WISHLIST (Guest + User + Migration)
+        public async Task<object> AddWishListProduct(string productId, string email, string ipAddress)
         {
             try
             {
                 using var con = new NpgsqlConnection(DbConnection);
                 await con.OpenAsync();
 
-                var query = @"INSERT INTO wishlist (email, product_id)
-SELECT @Email, @product_id
-WHERE NOT EXISTS (
-    SELECT 1 FROM wishlist 
-    WHERE email = @Email AND product_id = @product_id
-);
-        ";
+                Guid pid = Guid.Parse(productId);
+
+                // 🔄 STEP 1: MIGRATE IP → EMAIL AFTER LOGIN
+                if (!string.IsNullOrEmpty(email))
+                {
+                    var migrateQuery = @"
+                        UPDATE wishlist
+                        SET email = @Email, ip_address = NULL
+                        WHERE ip_address = @IpAddress
+                    ";
+
+                    using var migrateCmd = new NpgsqlCommand(migrateQuery, con);
+                    migrateCmd.Parameters.AddWithValue("@Email", email);
+                    migrateCmd.Parameters.AddWithValue("@IpAddress", ipAddress ?? "");
+
+                    await migrateCmd.ExecuteNonQueryAsync();
+                }
+
+                // ✅ STEP 2: INSERT WITHOUT DUPLICATE
+                var query = @"
+                INSERT INTO wishlist (email, ip_address, product_id)
+                SELECT @Email, @IpAddress, @ProductId
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM wishlist 
+                    WHERE product_id = @ProductId
+                    AND (
+                        (email = @Email AND @Email IS NOT NULL)
+                        OR
+                        (ip_address = @IpAddress AND @Email IS NULL)
+                    )
+                );
+                ";
 
                 using var cmd = new NpgsqlCommand(query, con);
-                cmd.Parameters.AddWithValue("@Email", email);
-                cmd.Parameters.AddWithValue("@product_id", Guid.Parse(productId));
+                cmd.Parameters.AddWithValue("@Email", (object?)email ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@IpAddress", (object?)ipAddress ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@ProductId", pid);
 
                 await cmd.ExecuteNonQueryAsync();
 
@@ -42,7 +69,8 @@ WHERE NOT EXISTS (
             }
         }
 
-        public async Task<object> GetWishListProduct(string email)
+        // ✅ GET WISHLIST
+        public async Task<object> GetWishListProduct(string email, string ipAddress)
         {
             try
             {
@@ -60,7 +88,6 @@ SELECT
     c.name AS category_name,
     b.name AS brand_name,
 
-    -- Colors (join with colors table)
     (
         SELECT STRING_AGG(DISTINCT col.name, ', ')
         FROM product_colors pc
@@ -68,7 +95,6 @@ SELECT
         WHERE pc.productid = p.id
     ) AS colors,
 
-    -- Sizes (join with sizes table)
     (
         SELECT STRING_AGG(DISTINCT sz.name, ', ')
         FROM product_sizes ps
@@ -78,17 +104,22 @@ SELECT
 
 FROM wishlist w
 JOIN products p ON w.product_id = p.id
-
 LEFT JOIN categories c ON p.categoryid = c.id
 LEFT JOIN brands b ON p.brandid = b.id
 
-WHERE w.email = @Email
+WHERE 
+(
+    (w.email = @Email AND @Email IS NOT NULL)
+    OR
+    (w.ip_address = @IpAddress AND @Email IS NULL)
+)
 
 ORDER BY w.created_at DESC
 ";
 
                 using var cmd = new NpgsqlCommand(query, con);
-                cmd.Parameters.AddWithValue("@Email", email);
+                cmd.Parameters.AddWithValue("@Email", (object?)email ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@IpAddress", (object?)ipAddress ?? DBNull.Value);
 
                 var reader = await cmd.ExecuteReaderAsync();
 
@@ -104,31 +135,23 @@ ORDER BY w.created_at DESC
                         Price = reader.GetDecimal(3),
                         Discountprice = reader.GetDecimal(4),
                         Image = reader.IsDBNull(5) ? null : reader.GetString(5),
-
                         CategoryName = reader.IsDBNull(6) ? null : reader.GetString(6),
                         BrandName = reader.IsDBNull(7) ? null : reader.GetString(7),
-
                         Colors = reader.IsDBNull(8) ? "" : reader.GetString(8),
                         Sizes = reader.IsDBNull(9) ? "" : reader.GetString(9)
                     });
                 }
 
-                return new
-                {
-                    success = true,
-                    data = list
-                };
+                return new { success = true, data = list };
             }
             catch (Exception ex)
             {
-                return new
-                {
-                    success = false,
-                    message = ex.Message
-                };
+                return new { success = false, message = ex.Message };
             }
         }
-        public async Task<object> DeleteWishListProduct(string productId, string email)
+
+        // ✅ DELETE WISHLIST
+        public async Task<object> DeleteWishListProduct(string productId, string email, string ipAddress)
         {
             try
             {
@@ -136,13 +159,19 @@ ORDER BY w.created_at DESC
                 await con.OpenAsync();
 
                 var query = @"
-            DELETE FROM wishlist 
-            WHERE product_id = @product_id AND email = @Email
-        ";
+DELETE FROM wishlist 
+WHERE product_id = @ProductId
+AND (
+    (email = @Email AND @Email IS NOT NULL)
+    OR
+    (ip_address = @IpAddress AND @Email IS NULL)
+)
+";
 
                 using var cmd = new NpgsqlCommand(query, con);
-                cmd.Parameters.AddWithValue("@product_id", Guid.Parse(productId));
-                cmd.Parameters.AddWithValue("@Email", email);
+                cmd.Parameters.AddWithValue("@ProductId", Guid.Parse(productId));
+                cmd.Parameters.AddWithValue("@Email", (object?)email ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@IpAddress", (object?)ipAddress ?? DBNull.Value);
 
                 await cmd.ExecuteNonQueryAsync();
 

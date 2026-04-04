@@ -31,6 +31,18 @@ namespace elemechWisetrack.DataBaseLayer
         Task<object> DeleteProduct(Guid productId);
         Task<object> RestoreProduct(Guid productId);
         Task<object> PermanentDeleteProduct(Guid productId);
+        Task<object> ToggleSalesStatus(Guid productId);
+        Task<object> GetSalesProducts(
+    int? page, int? pageSize,
+    Guid[]? categoryIds,
+    Guid? subCategoryId,
+    Guid[]? brandIds,
+    string[]? colors,
+    string[]? sizes,
+    decimal? minPrice,
+    decimal? maxPrice,
+    string? search
+);
 
     }
 
@@ -1158,6 +1170,246 @@ string baseSlug)
 
                     return prefix + nextNumber.ToString("D7");
                 }
+            }
+        }
+
+        public async Task<object> ToggleSalesStatus(Guid productId)
+        {
+            using var conn = new NpgsqlConnection(DbConnection);
+            await conn.OpenAsync();
+
+            try
+            {
+                // 🔹 1. GET CURRENT STATUS
+                string getQuery = "SELECT sales_status FROM products WHERE id = @id";
+
+                string currentStatus;
+
+                using (var cmd = new NpgsqlCommand(getQuery, conn))
+                {
+                    cmd.Parameters.AddWithValue("@id", productId);
+
+                    var result = await cmd.ExecuteScalarAsync();
+
+                    if (result == null)
+                        return new { success = false, message = "Product not found" };
+
+                    currentStatus = result.ToString();
+                }
+
+                // 🔹 2. TOGGLE LOGIC
+                string newStatus = currentStatus == "Active" ? "Inactive" : "Active";
+
+                // 🔹 3. UPDATE STATUS
+                string updateQuery = @"
+        UPDATE products
+        SET sales_status = @status
+        WHERE id = @id";
+
+                using (var cmd = new NpgsqlCommand(updateQuery, conn))
+                {
+                    cmd.Parameters.AddWithValue("@status", newStatus);
+                    cmd.Parameters.AddWithValue("@id", productId);
+
+                    await cmd.ExecuteNonQueryAsync();
+                }
+
+                return new
+                {
+                    productId,
+                    oldStatus = currentStatus,
+                    newStatus = newStatus
+                };
+            }
+            catch (Exception ex)
+            {
+                return new
+                {
+                    success = false,
+                    message = ex.Message
+                };
+            }
+        }
+
+        public async Task<object> GetSalesProducts(
+    int? page, int? pageSize,
+    Guid[]? categoryIds,
+    Guid? subCategoryId,
+    Guid[]? brandIds,
+    string[]? colors,
+    string[]? sizes,
+    decimal? minPrice,
+    decimal? maxPrice,
+    string? search)
+        {
+            try
+            {
+                int basePage = page ?? 1;
+                int basePageSize = pageSize ?? 10;
+                int offset = (basePage - 1) * basePageSize;
+
+                using var conn = new NpgsqlConnection(DbConnection);
+                await conn.OpenAsync();
+
+                // 🔥 IMPORTANT CONDITION
+                string where = "WHERE p.isdeleted = FALSE AND p.sales_status = 'Active' ";
+                var parameters = new List<NpgsqlParameter>();
+
+                // ============================
+                // 🔹 FILTERS
+                // ============================
+
+                if (categoryIds?.Length > 0)
+                {
+                    where += " AND p.categoryid = ANY(@categoryIds) ";
+                    parameters.Add(new NpgsqlParameter("@categoryIds", categoryIds));
+                }
+
+                if (subCategoryId.HasValue)
+                {
+                    where += " AND p.subcategoryid = @subCategoryId ";
+                    parameters.Add(new NpgsqlParameter("@subCategoryId", subCategoryId));
+                }
+
+                if (brandIds?.Length > 0)
+                {
+                    where += " AND p.brandid = ANY(@brandIds) ";
+                    parameters.Add(new NpgsqlParameter("@brandIds", brandIds));
+                }
+
+                if (colors?.Length > 0)
+                {
+                    where += " AND col.name = ANY(@colors) ";
+                    parameters.Add(new NpgsqlParameter("@colors", colors));
+                }
+
+                if (sizes?.Length > 0)
+                {
+                    where += " AND s.name = ANY(@sizes) ";
+                    parameters.Add(new NpgsqlParameter("@sizes", sizes));
+                }
+
+                if (minPrice.HasValue)
+                {
+                    where += " AND COALESCE(p.discountprice, p.price) >= @minPrice ";
+                    parameters.Add(new NpgsqlParameter("@minPrice", minPrice));
+                }
+
+                if (maxPrice.HasValue)
+                {
+                    where += " AND COALESCE(p.discountprice, p.price) <= @maxPrice ";
+                    parameters.Add(new NpgsqlParameter("@maxPrice", maxPrice));
+                }
+
+                if (!string.IsNullOrWhiteSpace(search))
+                {
+                    where += " AND LOWER(p.name) LIKE LOWER(@search) ";
+                    parameters.Add(new NpgsqlParameter("@search", $"%{search}%"));
+                }
+
+                // ============================
+                // 🔹 COUNT
+                // ============================
+
+                string countQuery = $@"
+        SELECT COUNT(DISTINCT p.id)
+        FROM products p
+        LEFT JOIN product_colors pc ON p.id = pc.productid
+        LEFT JOIN colors col ON pc.colorid = col.id
+        LEFT JOIN product_sizes ps ON p.id = ps.product_id
+        LEFT JOIN sizes s ON ps.size_id = s.id
+        {where};";
+
+                int totalRecords;
+
+                using (var cmd = new NpgsqlCommand(countQuery, conn))
+                {
+                    foreach (var p in parameters)
+                        cmd.Parameters.Add(new NpgsqlParameter(p.ParameterName, p.Value));
+
+                    totalRecords = Convert.ToInt32(await cmd.ExecuteScalarAsync());
+                }
+
+                // ============================
+                // 🔹 MAIN QUERY
+                // ============================
+
+                string query = $@"
+SELECT p.*, 
+       c.name AS category_name,
+       sc.name AS subcategory_name,
+       b.name AS brand_name,
+
+       COALESCE(ARRAY_AGG(DISTINCT col.name), '{{}}') AS colors,
+       COALESCE(ARRAY_AGG(DISTINCT s.name), '{{}}') AS sizes
+
+FROM products p
+
+LEFT JOIN categories c ON p.categoryid = c.id
+LEFT JOIN categories sc ON p.subcategoryid = sc.id
+LEFT JOIN brands b ON p.brandid = b.id
+
+LEFT JOIN product_colors pc ON p.id = pc.productid
+LEFT JOIN colors col ON pc.colorid = col.id
+
+LEFT JOIN product_sizes ps ON p.id = ps.product_id
+LEFT JOIN sizes s ON ps.size_id = s.id
+
+{where}
+
+GROUP BY p.id, c.name, sc.name, b.name
+ORDER BY p.createddate DESC
+LIMIT @pageSize OFFSET @offset;
+";
+
+                var list = new List<object>();
+
+                using (var cmd = new NpgsqlCommand(query, conn))
+                {
+                    foreach (var p in parameters)
+                        cmd.Parameters.Add(new NpgsqlParameter(p.ParameterName, p.Value));
+
+                    cmd.Parameters.AddWithValue("@pageSize", basePageSize);
+                    cmd.Parameters.AddWithValue("@offset", offset);
+
+                    using var reader = await cmd.ExecuteReaderAsync();
+
+                    while (await reader.ReadAsync())
+                    {
+                        list.Add(new
+                        {
+                            Id = reader["Id"],
+                            Name = reader["Name"]?.ToString(),
+                            Price = reader["Price"],
+                            DiscountPrice = reader["DiscountPrice"] == DBNull.Value ? null : reader["DiscountPrice"],
+                            Image = reader["MainImage"]?.ToString(),
+
+                            Category = reader["category_name"]?.ToString(),
+                            Brand = reader["brand_name"]?.ToString(),
+
+                            Colors = reader["colors"] == DBNull.Value ? new string[] { } : (string[])reader["colors"],
+                            Sizes = reader["sizes"] == DBNull.Value ? new string[] { } : (string[])reader["sizes"]
+                        });
+                    }
+                }
+
+                return new
+                {
+                    success = true,
+                    page = basePage,
+                    pageSize = basePageSize,
+                    totalRecords,
+                    totalPages = (int)Math.Ceiling((double)totalRecords / basePageSize),
+                    data = list
+                };
+            }
+            catch (Exception ex)
+            {
+                return new
+                {
+                    success = false,
+                    message = ex.Message
+                };
             }
         }
     }

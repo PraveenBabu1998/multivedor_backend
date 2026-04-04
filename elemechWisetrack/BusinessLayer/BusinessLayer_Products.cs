@@ -31,7 +31,18 @@ namespace elemechWisetrack.BusinessLayer
         Task<object> RestoreProduct(Guid productId);
         Task<object> PermanentDeleteProduct(Guid productId);
         Task<object> UploadProductsExcel(IFormFile file,string userEmail);
-
+        Task<object> ToggleSalesStatus(Guid productId);
+        Task<object> GetSalesProducts(
+    int? page, int? pageSize,
+    Guid[]? categoryIds,
+    Guid? subCategoryId,
+    Guid[]? brandIds,
+    string[]? colors,
+    string[]? sizes,
+    decimal? minPrice,
+    decimal? maxPrice,
+    string? search
+);
     }
 
     public partial interface IBusinessLayer : IBusinessLayer_Products
@@ -157,6 +168,30 @@ namespace elemechWisetrack.BusinessLayer
             slug = slug.Replace(" ", "-");
 
             return slug;
+        }
+
+        public async Task<object> ToggleSalesStatus(Guid productId)
+        {
+            return await _dataBaseLayer.ToggleSalesStatus(productId);
+        }
+        public async Task<object> GetSalesProducts(
+    int? page, int? pageSize,
+    Guid[]? categoryIds,
+    Guid? subCategoryId,
+    Guid[]? brandIds,
+    string[]? colors,
+    string[]? sizes,
+    decimal? minPrice,
+    decimal? maxPrice,
+    string? search)
+        {
+            return await _dataBaseLayer.GetSalesProducts(
+                page, pageSize,
+                categoryIds, subCategoryId, brandIds,
+                colors, sizes,
+                minPrice, maxPrice,
+                search
+            );
         }
     }
 }

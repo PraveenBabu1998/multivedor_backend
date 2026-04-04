@@ -169,5 +169,53 @@ namespace elemechWisetrack.Controllers
             return Ok(new {Success = false,Message = "Excel file is valid", result });
         }
 
+        [HttpPut("toggle-sales-status/{productId}")]
+        public async Task<IActionResult> ToggleSalesStatus(Guid productId)
+        {
+            var result = await _businessLayer.ToggleSalesStatus(productId);
+
+            return Ok(new
+            {
+                success = true,
+                message = "Sales status updated successfully",
+                data = result
+            });
+        }
+
+        [HttpGet("sales-products")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetSalesProducts(
+    [FromQuery] int? page,
+    [FromQuery] int? pageSize,
+
+    [FromQuery] Guid[]? categoryIds,
+    [FromQuery] Guid? subCategoryId,
+    [FromQuery] Guid[]? brandIds,
+
+    [FromQuery] string[]? colors,
+    [FromQuery] string[]? sizes,
+
+    [FromQuery] decimal? minPrice,
+    [FromQuery] decimal? maxPrice,
+
+    [FromQuery] string? search
+)
+        {
+            var data = await _businessLayer.GetSalesProducts(
+                page, pageSize,
+                categoryIds, subCategoryId, brandIds,
+                colors, sizes,
+                minPrice, maxPrice,
+                search
+            );
+
+            return Ok(new
+            {
+                success = true,
+                message = "Sales product list",
+                data
+            });
+        }
+
     }
 }
