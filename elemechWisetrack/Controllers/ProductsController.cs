@@ -52,21 +52,24 @@ namespace elemechWisetrack.Controllers
         public async Task<IActionResult> GetAllProducts(
     [FromQuery] int? page,
     [FromQuery] int? pageSize,
-    [FromQuery] Guid? categoryId,
+
+    [FromQuery] Guid[]? categoryIds,
     [FromQuery] Guid? subCategoryId,
-    [FromQuery] Guid? childCategoryId,
-    [FromQuery] Guid? brandId,
+    [FromQuery] Guid[]? brandIds,
+
     [FromQuery] string[]? colors,
     [FromQuery] string[]? sizes,
+
     [FromQuery] decimal? minPrice,
     [FromQuery] decimal? maxPrice,
+
     [FromQuery] string? search
 )
         {
             var data = await _businessLayer.GetAllProducts(
                 page, pageSize,
-                categoryId, subCategoryId, childCategoryId,
-                brandId, colors, sizes,
+                categoryIds, subCategoryId, brandIds,
+                colors, sizes,
                 minPrice, maxPrice,
                 search
             );

@@ -1566,8 +1566,8 @@
         "IsRequired": false
       },
       {
-        "Name": "categoryId",
-        "Type": "System.Nullable\u00601[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "Name": "categoryIds",
+        "Type": "System.Guid[]",
         "IsRequired": false
       },
       {
@@ -1576,13 +1576,8 @@
         "IsRequired": false
       },
       {
-        "Name": "childCategoryId",
-        "Type": "System.Nullable\u00601[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "brandId",
-        "Type": "System.Nullable\u00601[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "Name": "brandIds",
+        "Type": "System.Guid[]",
         "IsRequired": false
       },
       {

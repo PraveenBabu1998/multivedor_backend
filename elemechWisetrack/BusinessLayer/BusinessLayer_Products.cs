@@ -10,17 +10,16 @@ namespace elemechWisetrack.BusinessLayer
     {
         Task<object> AddSingleProduct(string userEmail, ProductInsertModel request);
         Task<object> GetAllProducts(
-     int? page, int? pageSize,
-     Guid? categoryId,
-     Guid? subCategoryId,
-     Guid? childCategoryId,
-     Guid? brandId,
-     string[]? colors,
-     string[]? sizes,
-     decimal? minPrice,
-     decimal? maxPrice,
-     string? search
- );
+    int? page, int? pageSize,
+    Guid[]? categoryIds,
+    Guid? subCategoryId,
+    Guid[]? brandIds,
+    string[]? colors,
+    string[]? sizes,
+    decimal? minPrice,
+    decimal? maxPrice,
+    string? search
+);
         Task<object> GetProductById(Guid productId);
         Task<object> GetAllProductsOfAdmin(string userEmail, int? page, int? pageSize);
         Task<object> UpdateProduct(
@@ -64,10 +63,9 @@ namespace elemechWisetrack.BusinessLayer
 
         public async Task<object> GetAllProducts(
     int? page, int? pageSize,
-    Guid? categoryId,
+    Guid[]? categoryIds,
     Guid? subCategoryId,
-    Guid? childCategoryId,
-    Guid? brandId,
+    Guid[]? brandIds,
     string[]? colors,
     string[]? sizes,
     decimal? minPrice,
@@ -76,8 +74,8 @@ namespace elemechWisetrack.BusinessLayer
         {
             return await _dataBaseLayer.GetAllProducts(
                 page, pageSize,
-                categoryId, subCategoryId, childCategoryId,
-                brandId, colors, sizes,
+                categoryIds, subCategoryId, brandIds,
+                colors, sizes,
                 minPrice, maxPrice,
                 search
             );

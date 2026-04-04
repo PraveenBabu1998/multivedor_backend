@@ -12,16 +12,14 @@ namespace elemechWisetrack.DataBaseLayer
     string baseSlug);
         Task<object> GetAllProducts(
     int? page, int? pageSize,
-    Guid? categoryId,
+    Guid[]? categoryIds,
     Guid? subCategoryId,
-    Guid? childCategoryId,
-    Guid? brandId,
+    Guid[]? brandIds,
     string[]? colors,
     string[]? sizes,
     decimal? minPrice,
     decimal? maxPrice,
-    string? search
-);
+    string? search);
         Task<object> GetProductById(Guid productId);
         Task<object> GetAllProductsOfAdmin(string userEmail, int? page, int? pageSize);
         Task<object> UpdateProduct(
@@ -257,21 +255,19 @@ namespace elemechWisetrack.DataBaseLayer
 
         public async Task<object> GetAllProducts(
     int? page, int? pageSize,
-    Guid? categoryId,
+    Guid[]? categoryIds,
     Guid? subCategoryId,
-    Guid? childCategoryId,
-    Guid? brandId,
+    Guid[]? brandIds,
     string[]? colors,
     string[]? sizes,
     decimal? minPrice,
     decimal? maxPrice,
-    string? search
-)
+    string? search)
         {
             try
             {
                 int basePage = page ?? 1;
-                int basePageSize = pageSize ?? 10;
+                int basePageSize = pageSize ?? 100;
                 int offset = (basePage - 1) * basePageSize;
 
                 using var conn = new NpgsqlConnection(DbConnection);
@@ -281,39 +277,43 @@ namespace elemechWisetrack.DataBaseLayer
                 var parameters = new List<NpgsqlParameter>();
 
                 // ============================
-                // 🔹 FILTERS
+                // 🔹 MULTI CATEGORY
                 // ============================
-
-                if (categoryId.HasValue)
+                if (categoryIds != null && categoryIds.Length > 0)
                 {
-                    where += " AND p.categoryid = @categoryId ";
-                    parameters.Add(new NpgsqlParameter("@categoryId", categoryId));
+                    where += " AND p.categoryid = ANY(@categoryIds) ";
+                    parameters.Add(new NpgsqlParameter("@categoryIds", categoryIds));
                 }
 
+                // 🔹 SUB CATEGORY
                 if (subCategoryId.HasValue)
                 {
                     where += " AND p.subcategoryid = @subCategoryId ";
                     parameters.Add(new NpgsqlParameter("@subCategoryId", subCategoryId));
                 }
 
-                if (brandId.HasValue)
+                // 🔹 MULTI BRAND
+                if (brandIds != null && brandIds.Length > 0)
                 {
-                    where += " AND p.brandid = @brandId ";
-                    parameters.Add(new NpgsqlParameter("@brandId", brandId));
+                    where += " AND p.brandid = ANY(@brandIds) ";
+                    parameters.Add(new NpgsqlParameter("@brandIds", brandIds));
                 }
 
+                // 🔹 COLOR
                 if (colors != null && colors.Length > 0)
                 {
                     where += " AND col.name = ANY(@colors) ";
                     parameters.Add(new NpgsqlParameter("@colors", colors));
                 }
 
+                // 🔹 SIZE
                 if (sizes != null && sizes.Length > 0)
                 {
                     where += " AND s.name = ANY(@sizes) ";
                     parameters.Add(new NpgsqlParameter("@sizes", sizes));
                 }
 
+                // 🔹 PRICE
                 if (minPrice.HasValue)
                 {
                     where += " AND COALESCE(p.discountprice, p.price) >= @minPrice ";
@@ -326,6 +326,7 @@ namespace elemechWisetrack.DataBaseLayer
                     parameters.Add(new NpgsqlParameter("@maxPrice", maxPrice));
                 }
 
+                // 🔹 SEARCH
                 if (!string.IsNullOrWhiteSpace(search))
                 {
                     where += " AND LOWER(p.name) LIKE LOWER(@search) ";
@@ -355,7 +356,7 @@ namespace elemechWisetrack.DataBaseLayer
                 }
 
                 // ============================
-                // 🔹 MAIN QUERY (NO IMAGE TABLE)
+                // 🔹 MAIN QUERY
                 // ============================
                 string query = $@"
 SELECT p.*, 
@@ -430,35 +431,8 @@ LIMIT @pageSize OFFSET @offset;
 
                             Price = reader["Price"],
                             DiscountPrice = reader["DiscountPrice"] == DBNull.Value ? null : reader["DiscountPrice"],
-                            CostPrice = reader["CostPrice"] == DBNull.Value ? null : reader["CostPrice"],
 
-                            TaxPercentage = reader["TaxPercentage"] == DBNull.Value ? null : reader["TaxPercentage"],
-
-                            SKU = reader["SKU"]?.ToString(),
-
-                            StockQuantity = reader["StockQuantity"],
-                            MinStockQuantity = reader["MinStockQuantity"] == DBNull.Value ? null : reader["MinStockQuantity"],
-                            TrackInventory = reader["TrackInventory"],
-
-                            // ✅ IMAGE FIX
-                            MainImage = mainImage,
-                            GalleryImages = string.IsNullOrEmpty(mainImage)
-                                ? new string[] { }
-                                : new string[] { mainImage },
-
-                            Weight = reader["Weight"] == DBNull.Value ? null : reader["Weight"],
-                            Length = reader["Length"] == DBNull.Value ? null : reader["Length"],
-                            Width = reader["Width"] == DBNull.Value ? null : reader["Width"],
-                            Height = reader["Height"] == DBNull.Value ? null : reader["Height"],
-
-                            MetaTitle = reader["MetaTitle"]?.ToString(),
-                            MetaDescription = reader["MetaDescription"]?.ToString(),
-                            MetaKeywords = reader["MetaKeywords"]?.ToString(),
-
-                            IsActive = reader["IsActive"],
-                            IsFeatured = reader["IsFeatured"],
-
-                            CreatedDate = reader["CreatedDate"]
+                            MainImage = mainImage
                         });
                     }
                 }

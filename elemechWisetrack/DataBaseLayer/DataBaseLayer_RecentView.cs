@@ -4,8 +4,8 @@ namespace elemechWisetrack.DataBaseLayer
 {
     public interface IDataBaseLayer_Recent
     {
-        Task<object> AddRecentView(string productId, string email);
-        Task<object> GetRecentViews(string email);
+        Task<object> AddRecentView(string productId, string email, string ipAddress);
+        Task<object> GetRecentViews(string email, string ipAddress);
     }
 
     public partial interface IDataBaseLayer : IDataBaseLayer_Recent { }
@@ -13,7 +13,7 @@ namespace elemechWisetrack.DataBaseLayer
     public partial class DataBaseLayer
     {
         // ✅ ADD / UPDATE RECENT VIEW
-        public async Task<object> AddRecentView(string productId, string email)
+        public async Task<object> AddRecentView(string productId, string email, string ipAddress)
         {
             using var con = new NpgsqlConnection(DbConnection);
             await con.OpenAsync();
@@ -22,41 +22,45 @@ namespace elemechWisetrack.DataBaseLayer
 
             try
             {
-                // ✅ 1. INSERT or UPDATE (avoid duplicate)
                 var upsertQuery = @"
-        INSERT INTO recent_views (product_id, email, viewed_at)
-        VALUES (@ProductId, @Email, NOW())
-        ON CONFLICT (product_id, email)
-        DO UPDATE SET viewed_at = NOW();
-        ";
+INSERT INTO recent_views (product_id, email, ip_address, viewed_at)
+VALUES (@ProductId, @Email, @IpAddress, NOW())
+ON CONFLICT (product_id, COALESCE(email, ''), COALESCE(ip_address, ''))
+DO UPDATE SET viewed_at = NOW();
+";
 
                 using (var cmd = new NpgsqlCommand(upsertQuery, con, transaction))
                 {
                     cmd.Parameters.AddWithValue("@ProductId", Guid.Parse(productId));
-                    cmd.Parameters.AddWithValue("@Email", email);
+                    cmd.Parameters.AddWithValue("@Email", (object?)email ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@IpAddress", (object?)ipAddress ?? DBNull.Value);
+
                     await cmd.ExecuteNonQueryAsync();
                 }
 
-                // ✅ 2. DELETE OLD RECORDS (keep only latest 20)
+                // ✅ Keep only 20 records per user (email OR IP)
                 var deleteQuery = @"
-        DELETE FROM recent_views
-        WHERE id IN (
-            SELECT id FROM recent_views
-            WHERE email = @Email
-            ORDER BY viewed_at DESC
-            OFFSET 20
-        );
-        ";
+DELETE FROM recent_views
+WHERE id IN (
+    SELECT id FROM recent_views
+    WHERE 
+        (email = @Email OR (email IS NULL AND ip_address = @IpAddress))
+    ORDER BY viewed_at DESC
+    OFFSET 20
+);
+";
 
                 using (var cmd = new NpgsqlCommand(deleteQuery, con, transaction))
                 {
-                    cmd.Parameters.AddWithValue("@Email", email);
+                    cmd.Parameters.AddWithValue("@Email", (object?)email ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@IpAddress", (object?)ipAddress ?? DBNull.Value);
+
                     await cmd.ExecuteNonQueryAsync();
                 }
 
                 await transaction.CommitAsync();
 
-                return new { success = true, message = "Recent updated (max 20 maintained)" };
+                return new { success = true, message = "Recent updated (Login + Guest supported)" };
             }
             catch (Exception ex)
             {
@@ -66,22 +70,31 @@ namespace elemechWisetrack.DataBaseLayer
         }
 
         // ✅ GET RECENT PRODUCTS
-        public async Task<object> GetRecentViews(string email)
+        public async Task<object> GetRecentViews(string email, string ipAddress)
         {
             using var con = new NpgsqlConnection(DbConnection);
             await con.OpenAsync();
 
             var query = @"
-            SELECT rv.product_id, p.name, p.price, p.mainimage, rv.viewed_at
-            FROM recent_views rv
-            JOIN products p ON p.id = rv.product_id
-            WHERE rv.email = @Email
-            ORDER BY rv.viewed_at DESC
-            LIMIT 20;
-            ";
+SELECT 
+    rv.product_id, 
+    p.name, 
+    p.price AS original_price,
+    p.discountprice,
+    p.mainimage, 
+    rv.viewed_at
+FROM recent_views rv
+JOIN products p ON p.id = rv.product_id
+WHERE 
+    (rv.email = @Email OR (rv.email IS NULL AND rv.ip_address = @IpAddress))
+ORDER BY rv.viewed_at DESC
+LIMIT 20;
+";
 
             using var cmd = new NpgsqlCommand(query, con);
-            cmd.Parameters.AddWithValue("@Email", email);
+
+            cmd.Parameters.AddWithValue("@Email", (object?)email ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@IpAddress", (object?)ipAddress ?? DBNull.Value);
 
             using var reader = await cmd.ExecuteReaderAsync();
 
@@ -89,11 +102,29 @@ namespace elemechWisetrack.DataBaseLayer
 
             while (await reader.ReadAsync())
             {
+                decimal originalPrice = reader["original_price"] == DBNull.Value
+                    ? 0
+                    : Convert.ToDecimal(reader["original_price"]);
+
+                decimal salePrice = reader["discountprice"] == DBNull.Value
+                    ? originalPrice
+                    : Convert.ToDecimal(reader["discountprice"]);
+
+                // ✅ Optional discount %
+                decimal discountPercent = originalPrice > 0
+                    ? ((originalPrice - salePrice) * 100) / originalPrice
+                    : 0;
+
                 list.Add(new
                 {
                     productId = reader["product_id"],
                     name = reader["name"],
-                    price = reader["price"],
+
+                    // ✅ BOTH PRICES
+                    originalPrice = originalPrice,
+                    salePrice = salePrice,
+                    discountPercent = Math.Round(discountPercent, 2),
+
                     image = reader["mainimage"],
                     viewedAt = reader["viewed_at"]
                 });

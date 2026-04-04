@@ -17,22 +17,28 @@ public class RecentViewController : ControllerBase
 
     // ✅ ADD RECENT VIEW
     [HttpPost("add/{productId}")]
+    [AllowAnonymous]
     public async Task<IActionResult> AddRecent(string productId)
     {
         string email = User.FindFirst(ClaimTypes.Email)?.Value;
 
-        var result = await _businessLayer.AddRecentView(productId, email);
+        // ✅ GET IP ADDRESS
+        string ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+        var result = await _businessLayer.AddRecentView(productId, email, ipAddress);
 
         return Ok(result);
     }
 
-    // ✅ GET RECENT PRODUCTS
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetRecent()
     {
         string email = User.FindFirst(ClaimTypes.Email)?.Value;
 
-        var result = await _businessLayer.GetRecentViews(email);
+        string ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+        var result = await _businessLayer.GetRecentViews(email, ipAddress);
 
         return Ok(result);
     }
