@@ -1,4 +1,5 @@
 ﻿using elemechWisetrack.BusinessLayer;
+using elemechWisetrack.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -58,6 +59,46 @@ namespace elemechWisetrack.Controllers
             string ipAddress = GetIpAddress();
 
             return Ok(await _businessLayer.DeleteWishListProduct(productId, email, ipAddress));
+        }
+
+        // CREATE
+        [HttpPost("contact")]
+        public async Task<IActionResult> Create(ContactUsModel model)
+        {
+            var result = await _businessLayer.CreateContact(model);
+            return Ok(result);
+        }
+
+        // GET ALL
+        [HttpGet("contact")]
+        public async Task<IActionResult> GetAll()
+        {
+            var result = await _businessLayer.GetAllContacts();
+            return Ok(result);
+        }
+
+        // GET BY ID
+        [HttpGet("contact/{id}")]
+        public async Task<IActionResult> GetById(Guid id)
+        {
+            var result = await _businessLayer.GetContactById(id);
+            return Ok(result);
+        }
+
+        // UPDATE STATUS
+        [HttpPut("contact/status/{id}")]
+        public async Task<IActionResult> UpdateStatus(Guid id, [FromQuery] string status)
+        {
+            var result = await _businessLayer.UpdateStatus(id, status);
+            return Ok(result);
+        }
+
+        // DELETE
+        [HttpDelete("contact/delete/{id}")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            var result = await _businessLayer.DeleteContact(id);
+            return Ok(result);
         }
     }
 }

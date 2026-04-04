@@ -194,4 +194,21 @@ namespace elemechWisetrack.Models
         public string Status { get; set; }
     }
 
+
+    public class ContactUsModel
+    {
+        public string Name { get; set; }
+        public string Email { get; set; }
+        public string Phone { get; set; }
+        public string Subject { get; set; }
+        public string Message { get; set; }
+    }
+
+    public class ApiResponse
+    {
+        public bool Success { get; set; }
+        public string Message { get; set; }
+        public object Data { get; set; }
+    }
+
 }
