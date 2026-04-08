@@ -7,6 +7,7 @@
         public string CategorySlug { get; set; } // new field
         public string? CategoryImage { get; set; }
         public bool CategoryStatus { get; set; }
+        public int? CategoryCount { get; set; }
     }
 
     public class ReviewModel
