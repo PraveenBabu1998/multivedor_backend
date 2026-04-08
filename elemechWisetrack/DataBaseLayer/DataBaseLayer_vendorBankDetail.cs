@@ -10,8 +10,8 @@ namespace elemechWisetrack.DataBaseLayer
 
     public partial interface IDataBaseLayer : IDataBaseLayer_vendorBankDetail
     {
-        Task<object> AddBankDetail(Guid userId, [FromBody] VandorBankDetail request);
-        Task<object?> GetBankDetailByUserId(Guid userId);
+        Task<object> AddBankDetail(string userId, [FromBody] VandorBankDetail request);
+        Task<object?> GetBankDetailByUserId(string userId);
         Task<List<object>> GetVendorBankDetail();
         Task<object> UpdateBankDetail(string userEmail, int bankDetailId, VandorBankDetail request);
         Task<object> DeleteVendorBankDetail(int bankId);
@@ -19,10 +19,10 @@ namespace elemechWisetrack.DataBaseLayer
 
     public partial class DataBaseLayer
     {
-        public async Task<object> AddBankDetail(Guid userId, VandorBankDetail request)
+        public async Task<object> AddBankDetail(string userId, VandorBankDetail request)
         {
-            if (userId == Guid.Empty)
-                return new { Success = false, Message = "UserId is required" };
+            if (userId == null)
+                return new { Success = false, Message = "Email is required" };
 
             if (string.IsNullOrWhiteSpace(request.BankName) ||
                 string.IsNullOrWhiteSpace(request.AccountHolderName) ||
@@ -96,7 +96,7 @@ namespace elemechWisetrack.DataBaseLayer
             }
         }
 
-        public async Task<object?> GetBankDetailByUserId(Guid userId)
+        public async Task<object?> GetBankDetailByUserId(string userId)
         {
             try
             {

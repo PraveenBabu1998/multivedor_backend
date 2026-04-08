@@ -5,8 +5,8 @@ namespace elemechWisetrack.BusinessLayer
 {
     public interface IBusinessLayer_VendorBankDetail
     {
-        Task<object> AddBankDetail(Guid userId, [FromBody] VandorBankDetail request);
-        Task<object?> GetBankDetailByUserId(Guid userId);
+        Task<object> AddBankDetail(string userId, [FromBody] VandorBankDetail request);
+        Task<object?> GetBankDetailByUserId(string userId);
         Task<object?> GetVendorBankDetail();
         Task<object> UpdateBankDetail(string userEmail, int bankDetailId, VandorBankDetail request);
         Task<object> DeleteVendorBankDetail(int bankId);
@@ -19,13 +19,13 @@ namespace elemechWisetrack.BusinessLayer
 
     public partial class BusinessLayer
     {
-        public async Task<object> AddBankDetail(Guid userId, [FromBody] VandorBankDetail request)
+        public async Task<object> AddBankDetail(string userId, [FromBody] VandorBankDetail request)
         {
             var data = await _dataBaseLayer.AddBankDetail(userId,request);
             return (data);
         }
 
-        public async Task<object?> GetBankDetailByUserId(Guid userId)
+        public async Task<object?> GetBankDetailByUserId(string userId)
         {
             return await _dataBaseLayer.GetBankDetailByUserId(userId);
         }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis.Elfie.Diagnostics;
 using Npgsql;
+using System.Buffers.Text;
 
 namespace elemechWisetrack.DataBaseLayer
 {
@@ -79,36 +80,39 @@ namespace elemechWisetrack.DataBaseLayer
             });
         }
 
-            // UploadCategory method here...
+        // UploadCategory method here...
 
         public async Task<List<CategoryTreeDto>> GetCategoryTree()
+        {
+            var categories = new List<CategoryTreeDto>();
+
+            using var conn = new NpgsqlConnection(DbConnection);
+            await conn.OpenAsync();
+
+            string sql = @"SELECT id, name, slug, parentid, image, isactive FROM categories;";
+
+            using var cmd = new NpgsqlCommand(sql, conn);
+            using var reader = await cmd.ExecuteReaderAsync();
+
+
+            while (await reader.ReadAsync())
             {
-                var categories = new List<CategoryTreeDto>();
+                var imageName = reader.IsDBNull(4) ? null : reader.GetString(4);
 
-                using var conn = new NpgsqlConnection(DbConnection);
-                await conn.OpenAsync();
-
-                string sql = @"SELECT id, name, slug, parentid, image, isactive FROM categories;";
-
-                using var cmd = new NpgsqlCommand(sql, conn);
-                using var reader = await cmd.ExecuteReaderAsync();
-
-                while (await reader.ReadAsync())
+                categories.Add(new CategoryTreeDto
                 {
-                    categories.Add(new CategoryTreeDto
-                    {
-                        Id = reader.GetGuid(0),
-                        Name = reader.GetString(1),
-                        Slug = reader.GetString(2),
-                        ParentId = reader.IsDBNull(3) ? null : reader.GetGuid(3),
-                        Image = reader.IsDBNull(4) ? null : reader.GetString(4),
-                        IsActive = reader.GetBoolean(5),
-                        Children = new List<CategoryTreeDto>()
-                    });
-                }
-
-                return BuildTree(categories);
+                    Id = reader.GetGuid(0),
+                    Name = reader.GetString(1),
+                    Slug = reader.GetString(2),
+                    ParentId = reader.IsDBNull(3) ? null : reader.GetGuid(3),
+                    Image = imageName == null ? null : $"uploads/categories/{imageName}",
+                    IsActive = reader.GetBoolean(5),
+                    Children = new List<CategoryTreeDto>()
+                });
             }
+
+            return BuildTree(categories);
+        }
 
         public async Task<CategoryTreeDto?> ListCategoryById(Guid categoryId)
         {
@@ -124,13 +128,20 @@ namespace elemechWisetrack.DataBaseLayer
 
             while (await reader.ReadAsync())
             {
+                var imageName = reader.IsDBNull(4) ? null : reader.GetString(4);
+
                 allCategories.Add(new CategoryTreeDto
                 {
                     Id = reader.GetGuid(0),
                     Name = reader.GetString(1),
                     Slug = reader.GetString(2),
                     ParentId = reader.IsDBNull(3) ? null : reader.GetGuid(3),
-                    Image = reader.IsDBNull(4) ? null : reader.GetString(4),
+
+                    // ✅ FIX HERE
+                    Image = imageName == null
+                        ? null
+                        : $"uploads/categories/{imageName}",
+
                     IsActive = reader.GetBoolean(5),
                     Children = new List<CategoryTreeDto>()
                 });

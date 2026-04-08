@@ -19,12 +19,14 @@ namespace elemechWisetrack.Controllers
         }
 
 
-        [Route("add/{userId}")]
+        [Route("add")]
         [HttpPost]
-        public async Task<IActionResult> AddBank(Guid userId, [FromBody] VandorBankDetail request)
+        public async Task<IActionResult> AddBank( [FromBody] VandorBankDetail request)
         {
             try
             {
+                var userId = User.FindFirst(ClaimTypes.Email)?.Value;
+
                 if (string.IsNullOrWhiteSpace(request.BankName) ||
                     string.IsNullOrWhiteSpace(request.AccountHolderName) ||
                     string.IsNullOrWhiteSpace(request.AccountNumber) ||
@@ -49,12 +51,9 @@ namespace elemechWisetrack.Controllers
 
         [Route("get/{userId}")]
         [HttpGet]
-        public async Task<IActionResult> GetBankDetailByUserId(Guid userId)
+        public async Task<IActionResult> GetBankDetailByUserId(string userId)
         {
-            if (userId.Equals(Guid.Empty))
-            {
-                return BadRequest("UserId is required.");
-            }
+            
 
             try
             {
