@@ -1,4 +1,5 @@
-﻿using elemechWisetrack.DataBaseLayer;
+﻿using CareerCracker.S3Services;
+using elemechWisetrack.DataBaseLayer;
 using elemechWisetrack.Models;
 
 namespace elemechWisetrack.BusinessLayer
@@ -20,28 +21,17 @@ namespace elemechWisetrack.BusinessLayer
 
         public async Task<object> CreateBanner(CreateBannerModel model)
         {
-            string imagePath = "";
+            string? imagePath = null;
 
             if (model.Image != null)
             {
-                var fileName = Guid.NewGuid() + Path.GetExtension(model.Image.FileName);
-                var folder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
-
-                if (!Directory.Exists(folder))
-                    Directory.CreateDirectory(folder);
-
-                var filePath = Path.Combine(folder, fileName);
-
-                using var stream = new FileStream(filePath, FileMode.Create);
-                await model.Image.CopyToAsync(stream);
-
-                imagePath = "/uploads/" + fileName;
+                imagePath = await S3StorageHelper.UploadFileAsync(model.Image, "uploads/banners");
             }
 
             return await _dataBaseLayer.CreateBanner(new CreateBannerDbModel
             {
                 Title = model.Title,
-                Image = imagePath,
+                Image = imagePath ?? "",
                 Link = model.Link
             });
         }
@@ -56,18 +46,12 @@ namespace elemechWisetrack.BusinessLayer
 
             if (model.Image != null)
             {
-                var fileName = Guid.NewGuid() + Path.GetExtension(model.Image.FileName);
-                var folder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
+                var existing = await _dataBaseLayer.GetBannerById(model.Id) as BannerModel;
+                if (!string.IsNullOrEmpty(existing?.Image))
+                    await S3StorageHelper.DeleteStoredMediaAsync(existing.Image);
 
-                if (!Directory.Exists(folder))
-                    Directory.CreateDirectory(folder);
-
-                var filePath = Path.Combine(folder, fileName);
-
-                using var stream = new FileStream(filePath, FileMode.Create);
-                await model.Image.CopyToAsync(stream);
-
-                imagePath = "/uploads/" + fileName;
+                var uploaded = await S3StorageHelper.UploadFileAsync(model.Image, "uploads/banners");
+                imagePath = uploaded ?? "";
             }
 
             return await _dataBaseLayer.UpdateBanner(new UpdateBannerDbModel

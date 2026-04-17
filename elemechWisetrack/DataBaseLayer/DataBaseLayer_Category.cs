@@ -1,4 +1,5 @@
-﻿using elemechWisetrack.Models;
+﻿using CareerCracker.S3Services;
+using elemechWisetrack.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis.Elfie.Diagnostics;
@@ -40,16 +41,7 @@ namespace elemechWisetrack.DataBaseLayer
             var imageFile = form.Files["category_image"];
             if (imageFile != null && imageFile.Length > 0)
             {
-                string uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "categories");
-
-                if (!Directory.Exists(uploadPath))
-                    Directory.CreateDirectory(uploadPath);
-
-                imageFileName = $"{Guid.NewGuid()}_{imageFile.FileName}";
-                string filePath = Path.Combine(uploadPath, imageFileName);
-
-                using var stream = new FileStream(filePath, FileMode.Create);
-                await imageFile.CopyToAsync(stream);
+                imageFileName = await S3StorageHelper.UploadFileAsync(imageFile, "uploads/categories");
             }
 
             using var conn = new NpgsqlConnection(DbConnection);
@@ -105,7 +97,7 @@ namespace elemechWisetrack.DataBaseLayer
                     Name = reader.GetString(1),
                     Slug = reader.GetString(2),
                     ParentId = reader.IsDBNull(3) ? null : reader.GetGuid(3),
-                    Image = imageName == null ? null : $"uploads/categories/{imageName}",
+                    Image = CategoryImagePublicUrl(imageName),
                     IsActive = reader.GetBoolean(5),
                     Children = new List<CategoryTreeDto>()
                 });
@@ -137,10 +129,7 @@ namespace elemechWisetrack.DataBaseLayer
                     Slug = reader.GetString(2),
                     ParentId = reader.IsDBNull(3) ? null : reader.GetGuid(3),
 
-                    // ✅ FIX HERE
-                    Image = imageName == null
-                        ? null
-                        : $"uploads/categories/{imageName}",
+                    Image = CategoryImagePublicUrl(imageName),
 
                     IsActive = reader.GetBoolean(5),
                     Children = new List<CategoryTreeDto>()
@@ -227,20 +216,8 @@ namespace elemechWisetrack.DataBaseLayer
 
             if (imageFile != null && imageFile.Length > 0)
             {
-                string uploadPath = Path.Combine(
-                    Directory.GetCurrentDirectory(),
-                    "wwwroot",
-                    "uploads",
-                    "categories");
-
-                if (!Directory.Exists(uploadPath))
-                    Directory.CreateDirectory(uploadPath);
-
-                imageFileName = $"{Guid.NewGuid()}_{imageFile.FileName}";
-                string filePath = Path.Combine(uploadPath, imageFileName);
-
-                using var stream = new FileStream(filePath, FileMode.Create);
-                await imageFile.CopyToAsync(stream);
+                await S3StorageHelper.DeleteStoredMediaAsync(existingImage);
+                imageFileName = await S3StorageHelper.UploadFileAsync(imageFile, "uploads/categories");
             }
 
             // 4️⃣ Update Query
@@ -328,6 +305,15 @@ namespace elemechWisetrack.DataBaseLayer
 
 
         #region Build Tree (O(n))
+
+        private static string? CategoryImagePublicUrl(string? imageValue)
+        {
+            if (string.IsNullOrEmpty(imageValue)) return null;
+            if (imageValue.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                imageValue.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                return imageValue;
+            return $"uploads/categories/{imageValue}";
+        }
 
         private List<CategoryTreeDto> BuildTree(List<CategoryTreeDto> categories)
             {

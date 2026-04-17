@@ -1,4 +1,5 @@
-﻿using elemechWisetrack.Models;
+﻿using CareerCracker.S3Services;
+using elemechWisetrack.Models;
 using Npgsql;
 
 namespace elemechWisetrack.DataBaseLayer
@@ -358,15 +359,10 @@ namespace elemechWisetrack.DataBaseLayer
                 int insertedCount = 0;
                 int skippedCount = 0;
 
-                string imageFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads/products");
-
-                if (!Directory.Exists(imageFolder))
-                    Directory.CreateDirectory(imageFolder);
-
                 // ================= GET USER =================
 
                 string getUserQuery = @"SELECT ""Id"" FROM ""AspNetUsers"" 
-                                WHERE ""Email""=@Email LIMIT 1";
+                                WHERE LOWER(""Email"")=LOWER(@Email) LIMIT 1";
 
                 Guid userId;
 
@@ -376,10 +372,8 @@ namespace elemechWisetrack.DataBaseLayer
 
                     var result = await userCmd.ExecuteScalarAsync();
 
-                    if (result == null)
+                    if (result == null || !Guid.TryParse(result.ToString(), out userId))
                         return new { success = false, message = "User not found" };
-
-                    userId = Guid.Parse(result.ToString());
                 }
 
                 foreach (var item in products)
@@ -387,8 +381,6 @@ namespace elemechWisetrack.DataBaseLayer
                     string productName = item.E ?? "";
                     string categoryName = item.B ?? "";
                     string shortDescription = item.G ?? "";
-                    string specification = item.H ?? "";
-                    string productCode = item.M ?? "";
                     string description = item.U ?? "";
 
                     if (string.IsNullOrWhiteSpace(productName))
@@ -401,7 +393,7 @@ namespace elemechWisetrack.DataBaseLayer
                     bool isFeatured = item.Y?.ToLower() == "true" || item.Y == "1";
                     bool isActive = item.AA?.ToLower() == "true" || item.AA == "1";
 
-                    string slug = productName.ToLower().Replace(" ", "-");
+                    string slug = productName.Trim().ToLowerInvariant().Replace(" ", "-");
 
                     // ================= DUPLICATE CHECK =================
 
@@ -435,7 +427,7 @@ namespace elemechWisetrack.DataBaseLayer
 
                         foreach (var url in urls)
                         {
-                            var imagePath = await DownloadImageAsync(url, imageFolder);
+                            var imagePath = await DownloadImageAsync(url);
 
                             if (!string.IsNullOrEmpty(imagePath))
                                 savedImages.Add(imagePath);
@@ -472,7 +464,26 @@ namespace elemechWisetrack.DataBaseLayer
                         var result = await cmd.ExecuteScalarAsync();
 
                         if (result != null)
+                        {
                             brandId = (Guid)result;
+                        }
+                        else
+                        {
+                            brandId = Guid.NewGuid();
+                            string brandSlug = brandName.Trim().ToLowerInvariant().Replace(" ", "-");
+                            string insertBrand = @"INSERT INTO brands (id,name,slug,description,logo,isactive,createdby,createddate)
+                                                   VALUES (@id,@name,@slug,@description,@logo,@isactive,@createdby,@createddate)";
+                            using var insertBrandCmd = new NpgsqlCommand(insertBrand, con);
+                            insertBrandCmd.Parameters.AddWithValue("@id", brandId.Value);
+                            insertBrandCmd.Parameters.AddWithValue("@name", brandName);
+                            insertBrandCmd.Parameters.AddWithValue("@slug", brandSlug);
+                            insertBrandCmd.Parameters.AddWithValue("@description", DBNull.Value);
+                            insertBrandCmd.Parameters.AddWithValue("@logo", DBNull.Value);
+                            insertBrandCmd.Parameters.AddWithValue("@isactive", true);
+                            insertBrandCmd.Parameters.AddWithValue("@createdby", userId);
+                            insertBrandCmd.Parameters.AddWithValue("@createddate", DateTime.UtcNow);
+                            await insertBrandCmd.ExecuteNonQueryAsync();
+                        }
                     }
 
                     // ================= CATEGORY =================
@@ -482,23 +493,151 @@ namespace elemechWisetrack.DataBaseLayer
                     if (!string.IsNullOrWhiteSpace(categoryName))
                     {
                         var parts = categoryName.Split('>');
-                        string lastCategory = parts.Last().Trim();
+                        Guid? parentCategoryId = null;
 
-                        string catQuery = "SELECT id FROM categories WHERE LOWER(name)=LOWER(@name) LIMIT 1";
+                        foreach (var part in parts.Select(x => x.Trim()).Where(x => !string.IsNullOrWhiteSpace(x)))
+                        {
+                            string catQuery;
+                            using var cmd = new NpgsqlCommand();
+                            cmd.Connection = con;
+                            cmd.Parameters.AddWithValue("@name", part);
 
-                        using var cmd = new NpgsqlCommand(catQuery, con);
-                        cmd.Parameters.AddWithValue("@name", lastCategory);
+                            if (parentCategoryId.HasValue)
+                            {
+                                catQuery = @"SELECT id FROM categories
+                                             WHERE LOWER(name)=LOWER(@name)
+                                             AND parentid = @parentid
+                                             LIMIT 1";
+                                cmd.Parameters.AddWithValue("@parentid", parentCategoryId.Value);
+                            }
+                            else
+                            {
+                                catQuery = @"SELECT id FROM categories
+                                             WHERE LOWER(name)=LOWER(@name)
+                                             AND parentid IS NULL
+                                             LIMIT 1";
+                            }
 
-                        var result = await cmd.ExecuteScalarAsync();
+                            cmd.CommandText = catQuery;
 
-                        if (result != null)
-                            categoryId = (Guid)result;
+                            var result = await cmd.ExecuteScalarAsync();
+
+                            if (result != null)
+                            {
+                                parentCategoryId = (Guid)result;
+                            }
+                            else
+                            {
+                                Guid newCategoryId = Guid.NewGuid();
+                                string categorySlug = part.Trim().ToLowerInvariant().Replace(" ", "-");
+                                string insertCategory = @"INSERT INTO categories (id,name,slug,parentid,image,isactive)
+                                                          VALUES (@id,@name,@slug,@parentid,@image,@isactive)";
+                                using var insertCategoryCmd = new NpgsqlCommand(insertCategory, con);
+                                insertCategoryCmd.Parameters.AddWithValue("@id", newCategoryId);
+                                insertCategoryCmd.Parameters.AddWithValue("@name", part);
+                                insertCategoryCmd.Parameters.AddWithValue("@slug", categorySlug);
+                                insertCategoryCmd.Parameters.AddWithValue("@parentid", (object?)parentCategoryId ?? DBNull.Value);
+                                insertCategoryCmd.Parameters.AddWithValue("@image", DBNull.Value);
+                                insertCategoryCmd.Parameters.AddWithValue("@isactive", true);
+                                await insertCategoryCmd.ExecuteNonQueryAsync();
+                                parentCategoryId = newCategoryId;
+                            }
+                        }
+
+                        categoryId = parentCategoryId;
+                    }
+
+                    // ================= COLOR =================
+
+                    Guid? colorId = null;
+                    if (shortDescription.Contains("Colour:") || shortDescription.Contains("Color:"))
+                    {
+                        string colorPart = shortDescription.Contains("Colour:")
+                            ? shortDescription.Split("Colour:")[1]
+                            : shortDescription.Split("Color:")[1];
+
+                        string firstColor = colorPart.Split(",")[0]
+                                                     .Split('&', StringSplitOptions.RemoveEmptyEntries)
+                                                     .FirstOrDefault()?.Trim() ?? "";
+
+                        if (!string.IsNullOrWhiteSpace(firstColor))
+                        {
+                            string colorQuery = "SELECT id FROM colors WHERE LOWER(name)=LOWER(@name) LIMIT 1";
+                            using var colorCmd = new NpgsqlCommand(colorQuery, con);
+                            colorCmd.Parameters.AddWithValue("@name", firstColor);
+                            var result = await colorCmd.ExecuteScalarAsync();
+                            if (result != null)
+                            {
+                                colorId = (Guid)result;
+                            }
+                            else
+                            {
+                                colorId = Guid.NewGuid();
+                                string colorSlug = firstColor.Trim().ToLowerInvariant().Replace(" ", "-");
+                                string insertColor = @"INSERT INTO colors (id,name,slug,hexcode,isactive,isdeleted,createddate)
+                                                       VALUES (@id,@name,@slug,@hexcode,@isactive,@isdeleted,@createddate)";
+                                using var insertColorCmd = new NpgsqlCommand(insertColor, con);
+                                insertColorCmd.Parameters.AddWithValue("@id", colorId.Value);
+                                insertColorCmd.Parameters.AddWithValue("@name", firstColor);
+                                insertColorCmd.Parameters.AddWithValue("@slug", colorSlug);
+                                insertColorCmd.Parameters.AddWithValue("@hexcode", DBNull.Value);
+                                insertColorCmd.Parameters.AddWithValue("@isactive", true);
+                                insertColorCmd.Parameters.AddWithValue("@isdeleted", false);
+                                insertColorCmd.Parameters.AddWithValue("@createddate", DateTime.UtcNow);
+                                await insertColorCmd.ExecuteNonQueryAsync();
+                            }
+                        }
+                    }
+
+                    // ================= SIZE =================
+
+                    Guid? sizeId = null;
+                    if (shortDescription.Contains("Size:"))
+                    {
+                        string sizePart = shortDescription.Split("Size:")[1];
+                        string firstSize = sizePart.Split(",")[0]
+                                                   .Split('&', StringSplitOptions.RemoveEmptyEntries)
+                                                   .FirstOrDefault()?.Trim() ?? "";
+
+                        if (!string.IsNullOrWhiteSpace(firstSize))
+                        {
+                            string sizeQuery = "SELECT id FROM sizes WHERE LOWER(name)=LOWER(@name) LIMIT 1";
+                            using var sizeCmd = new NpgsqlCommand(sizeQuery, con);
+                            sizeCmd.Parameters.AddWithValue("@name", firstSize);
+                            var result = await sizeCmd.ExecuteScalarAsync();
+                            if (result != null)
+                            {
+                                sizeId = (Guid)result;
+                            }
+                            else
+                            {
+                                sizeId = Guid.NewGuid();
+                                string sizeSlug = firstSize.Trim().ToLowerInvariant().Replace(" ", "-");
+                                string insertSize = @"INSERT INTO sizes (id,name,slug,isactive,isdeleted,createddate,updateddate)
+                                                      VALUES (@id,@name,@slug,@isactive,@isdeleted,@createddate,@updateddate)";
+                                using var insertSizeCmd = new NpgsqlCommand(insertSize, con);
+                                insertSizeCmd.Parameters.AddWithValue("@id", sizeId.Value);
+                                insertSizeCmd.Parameters.AddWithValue("@name", firstSize);
+                                insertSizeCmd.Parameters.AddWithValue("@slug", sizeSlug);
+                                insertSizeCmd.Parameters.AddWithValue("@isactive", true);
+                                insertSizeCmd.Parameters.AddWithValue("@isdeleted", false);
+                                insertSizeCmd.Parameters.AddWithValue("@createddate", DateTime.UtcNow);
+                                insertSizeCmd.Parameters.AddWithValue("@updateddate", DBNull.Value);
+                                await insertSizeCmd.ExecuteNonQueryAsync();
+                            }
+                        }
+                    }
+
+                    if (!categoryId.HasValue)
+                    {
+                        skippedCount++;
+                        continue;
                     }
 
                     // ================= PRODUCT ID =================
 
                     Guid productId = Guid.NewGuid();
-                    string sku = "SKU-" + DateTime.Now.Ticks;
+                    string sku = !string.IsNullOrWhiteSpace(item.M) ? item.M.Trim() : "SKU-" + DateTime.UtcNow.Ticks;
 
                     // ================= INSERT PRODUCT =================
 
@@ -506,18 +645,16 @@ namespace elemechWisetrack.DataBaseLayer
             INSERT INTO products
             (
                 id,name,slug,shortdescription,description,
-                categoryid,brandid,price,discountprice,
+                categoryid,brandid,colorid,sizeid,price,discountprice,
                 sku,stockquantity,mainimage,galleryimages,
-                isfeatured,isactive,product_code,specification,
-                createddate,createdby
+                isfeatured,isactive,isdeleted,createddate,createdby
             )
             VALUES
             (
                 @id,@name,@slug,@shortdescription,@description,
-                @categoryid,@brandid,@price,@discountprice,
+                @categoryid,@brandid,@colorid,@sizeid,@price,@discountprice,
                 @sku,@stockquantity,@mainimage,@galleryimages,
-                @isfeatured,@isactive,@productcode,@specification,
-                @createddate,@createdby
+                @isfeatured,@isactive,@isdeleted,@createddate,@createdby
             )";
 
                     using (var cmd = new NpgsqlCommand(insertQuery, con))
@@ -527,8 +664,10 @@ namespace elemechWisetrack.DataBaseLayer
                         cmd.Parameters.AddWithValue("@slug", slug);
                         cmd.Parameters.AddWithValue("@shortdescription", shortDescription ?? "");
                         cmd.Parameters.AddWithValue("@description", description ?? "");
-                        cmd.Parameters.AddWithValue("@categoryid", (object?)categoryId ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@categoryid", categoryId.Value);
                         cmd.Parameters.AddWithValue("@brandid", (object?)brandId ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@colorid", (object?)colorId ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@sizeid", (object?)sizeId ?? DBNull.Value);
                         cmd.Parameters.AddWithValue("@price", price);
                         cmd.Parameters.AddWithValue("@discountprice", sellingPrice);
                         cmd.Parameters.AddWithValue("@sku", sku);
@@ -537,89 +676,11 @@ namespace elemechWisetrack.DataBaseLayer
                         cmd.Parameters.AddWithValue("@galleryimages", galleryImages);
                         cmd.Parameters.AddWithValue("@isfeatured", isFeatured);
                         cmd.Parameters.AddWithValue("@isactive", isActive);
-                        cmd.Parameters.AddWithValue("@productcode", productCode ?? "");
-                        cmd.Parameters.AddWithValue("@specification", specification ?? "");
+                        cmd.Parameters.AddWithValue("@isdeleted", false);
                         cmd.Parameters.AddWithValue("@createddate", DateTime.UtcNow);
                         cmd.Parameters.AddWithValue("@createdby", userId);
 
                         await cmd.ExecuteNonQueryAsync();
-                    }
-
-                    // ================= EXTRACT COLORS =================
-
-                    var colors = new HashSet<string>();
-
-                    if (shortDescription.Contains("Colour:") || shortDescription.Contains("Color:"))
-                    {
-                        string part = shortDescription.Contains("Colour:")
-                            ? shortDescription.Split("Colour:")[1]
-                            : shortDescription.Split("Color:")[1];
-
-                        part = part.Split(",")[0].Trim();
-
-                        foreach (var c in part.Split('&'))
-                        {
-                            if (!string.IsNullOrWhiteSpace(c))
-                                colors.Add(c.Trim());
-                        }
-                    }
-
-                    foreach (var color in colors)
-                    {
-                        string query = "SELECT id FROM colors WHERE LOWER(name)=LOWER(@name) LIMIT 1";
-
-                        using var colorCmd = new NpgsqlCommand(query, con);
-                        colorCmd.Parameters.AddWithValue("@name", color);
-
-                        var colorId = await colorCmd.ExecuteScalarAsync();
-
-                        if (colorId != null)
-                        {
-                            string insert = "INSERT INTO product_colors(ProductId,ColorId) VALUES(@pid,@cid)";
-
-                            using var cmd = new NpgsqlCommand(insert, con);
-                            cmd.Parameters.AddWithValue("@pid", productId);
-                            cmd.Parameters.AddWithValue("@cid", (Guid)colorId);
-
-                            await cmd.ExecuteNonQueryAsync();
-                        }
-                    }
-
-                    // ================= EXTRACT SIZES =================
-
-                    var sizes = new HashSet<string>();
-
-                    if (shortDescription.Contains("Size:"))
-                    {
-                        string part = shortDescription.Split("Size:")[1];
-                        part = part.Split(",")[0].Trim();
-
-                        foreach (var s in part.Split('&'))
-                        {
-                            if (!string.IsNullOrWhiteSpace(s))
-                                sizes.Add(s.Trim());
-                        }
-                    }
-
-                    foreach (var size in sizes)
-                    {
-                        string query = "SELECT id FROM sizes WHERE LOWER(name)=LOWER(@name) LIMIT 1";
-
-                        using var sizeCmd = new NpgsqlCommand(query, con);
-                        sizeCmd.Parameters.AddWithValue("@name", size);
-
-                        var sizeId = await sizeCmd.ExecuteScalarAsync();
-
-                        if (sizeId != null)
-                        {
-                            string insert = "INSERT INTO product_sizes(product_id,size_id) VALUES(@pid,@sid)";
-
-                            using var cmd = new NpgsqlCommand(insert, con);
-                            cmd.Parameters.AddWithValue("@pid", productId);
-                            cmd.Parameters.AddWithValue("@sid", (Guid)sizeId);
-
-                            await cmd.ExecuteNonQueryAsync();
-                        }
                     }
 
                     insertedCount++;
@@ -636,7 +697,7 @@ namespace elemechWisetrack.DataBaseLayer
 
         private static readonly HttpClient httpClient = new HttpClient();
 
-        public async Task<string> DownloadImageAsync(string imageUrl, string folderPath)
+        public async Task<string> DownloadImageAsync(string imageUrl)
         {
             try
             {
@@ -650,19 +711,17 @@ namespace elemechWisetrack.DataBaseLayer
 
                 var bytes = await response.Content.ReadAsByteArrayAsync();
 
-                string extension = Path.GetExtension(imageUrl);
+                string extension = Path.GetExtension(imageUrl.Split('?')[0]);
 
                 if (string.IsNullOrEmpty(extension))
                     extension = ".jpg";
 
-                string fileName = Guid.NewGuid().ToString() + extension;
+                var contentType = response.Content.Headers.ContentType?.MediaType;
+                if (string.IsNullOrWhiteSpace(contentType))
+                    contentType = "image/jpeg";
 
-                string fullPath = Path.Combine(folderPath, fileName);
-
-                await File.WriteAllBytesAsync(fullPath, bytes);
-
-                // return relative path to store in DB
-                return "/uploads/products/" + fileName;
+                var uploaded = await S3StorageHelper.UploadBytesAsync(bytes, extension, contentType, "uploads/products");
+                return uploaded ?? "";
             }
             catch
             {

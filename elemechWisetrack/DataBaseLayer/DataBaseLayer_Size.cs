@@ -11,13 +11,7 @@ namespace elemechWisetrack.DataBaseLayer
         Task<object> UpdateSize(Guid id, ProductSizes request, string slug);
         Task<object> ToggleSizeStatus(Guid id);
         Task<object> SoftDeleteSize(Guid id);
-        Task<object> RestoreSize(Guid id);
         Task<object> DeleteSize(Guid id);
-        Task<object> AddProductSize(ProductSizeRequest request);
-        Task<object> GetProductSizes();
-        Task<object> GetSizeByProduct(Guid productId);
-        Task<object> DeleteProductSize(Guid id);
-        Task<object> UpdateProductSize(Guid id, ProductSizeRequest request);
     }
 
     public partial interface IDataBaseLayer : IDataBaseLayer_Size { }
@@ -60,7 +54,7 @@ namespace elemechWisetrack.DataBaseLayer
             {
                 await con.OpenAsync();
 
-                string query = @"SELECT id,name,description,isactive
+                string query = @"SELECT id,name,isactive
                          FROM sizes
                          WHERE isdeleted=false
                          ORDER BY createddate DESC";
@@ -76,7 +70,6 @@ namespace elemechWisetrack.DataBaseLayer
                         {
                             id = reader["id"],
                             name = reader["name"],
-                            description = reader["description"],
                             isactive = reader["isactive"]
                         });
                     }
@@ -156,26 +149,6 @@ namespace elemechWisetrack.DataBaseLayer
             }
         }
 
-        public async Task<object> RestoreSize(Guid id)
-        {
-            using (var con = new NpgsqlConnection(DbConnection))
-            {
-                await con.OpenAsync();
-
-                string query = @"UPDATE sizes
-                         SET isdeleted=false
-                         WHERE id=@Id";
-
-                using (var cmd = new NpgsqlCommand(query, con))
-                {
-                    cmd.Parameters.AddWithValue("@Id", id);
-                    await cmd.ExecuteNonQueryAsync();
-                }
-
-                return new { success = true, message = "Size restored" };
-            }
-        }
-
         public async Task<object> DeleteSize(Guid id)
         {
             using (var con = new NpgsqlConnection(DbConnection))
@@ -212,152 +185,5 @@ namespace elemechWisetrack.DataBaseLayer
             };
         }
 
-        public async Task<object> AddProductSize(ProductSizeRequest request)
-        {
-            using (var con = new NpgsqlConnection(DbConnection))
-            {
-                await con.OpenAsync();
-
-                string query = @"INSERT INTO product_sizes 
-                            (id, product_id, size_id)
-                            VALUES (@id, @productId, @sizeId)";
-
-                using (var cmd = new NpgsqlCommand(query, con))
-                {
-                    cmd.Parameters.AddWithValue("@id", Guid.NewGuid());
-                    cmd.Parameters.AddWithValue("@productId", request.ProductId);
-                    cmd.Parameters.AddWithValue("@sizeId", request.SizeId);
-
-                    await cmd.ExecuteNonQueryAsync();
-                }
-
-                return new { message = "Product Size Added Successfully" };
-            }
-        }
-
-        public async Task<object> GetProductSizes()
-        {
-            using (var con = new NpgsqlConnection(DbConnection))
-            {
-                await con.OpenAsync();
-
-                string query = @"SELECT ps.id,
-                            p.name AS product_name,
-                            s.name AS size_name
-                            FROM product_sizes ps
-                            JOIN products p ON ps.product_id = p.id
-                            JOIN sizes s ON ps.size_id = s.id";
-
-                using (var cmd = new NpgsqlCommand(query, con))
-                {
-                    using (var reader = await cmd.ExecuteReaderAsync())
-                    {
-                        var list = new List<object>();
-
-                        while (await reader.ReadAsync())
-                        {
-                            list.Add(new
-                            {
-                                id = reader["id"],
-                                productName = reader["product_name"],
-                                sizeName = reader["size_name"]
-                            });
-                        }
-
-                        return list;
-                    }
-                }
-            }
-        }
-
-        public async Task<object> GetSizeByProduct(Guid productId)
-        {
-            using (var con = new NpgsqlConnection(DbConnection))
-            {
-                await con.OpenAsync();
-
-                string query = @"SELECT ps.id,
-                            s.name
-                            FROM product_sizes ps
-                            JOIN sizes s ON ps.size_id = s.id
-                            WHERE ps.product_id = @productId";
-
-                using (var cmd = new NpgsqlCommand(query, con))
-                {
-                    cmd.Parameters.AddWithValue("@productId", productId);
-
-                    using (var reader = await cmd.ExecuteReaderAsync())
-                    {
-                        var list = new List<object>();
-
-                        while (await reader.ReadAsync())
-                        {
-                            list.Add(new
-                            {
-                                id = reader["id"],
-                                size = reader["name"]
-                            });
-                        }
-
-                        return list;
-                    }
-                }
-            }
-        }
-
-        public async Task<object> DeleteProductSize(Guid id)
-        {
-            using (var con = new NpgsqlConnection(DbConnection))
-            {
-                await con.OpenAsync();
-
-                string query = "DELETE FROM product_sizes WHERE id = @id";
-
-                using (var cmd = new NpgsqlCommand(query, con))
-                {
-                    cmd.Parameters.AddWithValue("@id", id);
-                    await cmd.ExecuteNonQueryAsync();
-                }
-
-                return new { message = "Product Size Deleted" };
-            }
-        }
-
-        public async Task<object> UpdateProductSize(Guid id, ProductSizeRequest request)
-        {
-            using (var con = new NpgsqlConnection(DbConnection))
-            {
-                await con.OpenAsync();
-
-                string query = @"UPDATE product_sizes
-                         SET product_id = @productId,
-                             size_id = @sizeId
-                         WHERE id = @id";
-
-                using (var cmd = new NpgsqlCommand(query, con))
-                {
-                    cmd.Parameters.AddWithValue("@id", id);
-                    cmd.Parameters.AddWithValue("@productId", request.ProductId);
-                    cmd.Parameters.AddWithValue("@sizeId", request.SizeId);
-
-                    int rows = await cmd.ExecuteNonQueryAsync();
-
-                    if (rows > 0)
-                    {
-                        return new
-                        {
-                            success = true,
-                            message = "Product Size Updated Successfully"
-                        };
-                    }
-
-                    return new
-                    {
-                        success = false,
-                        message = "Product Size not found"
-                    };
-                }
-            }
-        }
     }
 }

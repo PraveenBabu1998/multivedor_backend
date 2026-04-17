@@ -11,6 +11,8 @@ namespace elemechWisetrack.BusinessLayer
         Task<object> RejectVendor(string userId, string adminId, string reason);
         Task<object> GetAdminVendors();
         Task<object> GetAllUsersByRole();
+        Task<object> AddVendorReviewRemark(string userId, string adminEmail, string message);
+        Task<object> GetVendorDetailsById(string userId);
     }
 
     public partial interface IBusinessLayer : IBusinessLayer_Admin
@@ -122,9 +124,10 @@ namespace elemechWisetrack.BusinessLayer
                 if (string.IsNullOrEmpty(email) ||
                     string.IsNullOrEmpty(password) ||
                     string.IsNullOrEmpty(firstname) ||
+                    string.IsNullOrEmpty(lastname) ||
                     string.IsNullOrEmpty(phone))
                 {
-                    return new { success = false, message = "Required fields missing" };
+                    return new { success = false, message = "Required fields: email, password, firstname, lastname, phone" };
                 }
 
                 // 🔹 Check existing user
@@ -202,6 +205,16 @@ namespace elemechWisetrack.BusinessLayer
         public async Task<object> GetAllUsersByRole()
         {
             return await _dataBaseLayer.GetAllUsersByRole();
+        }
+
+        public async Task<object> AddVendorReviewRemark(string userId, string adminEmail, string message)
+        {
+            return await _dataBaseLayer.AddVendorReviewRemark(userId, adminEmail, message);
+        }
+
+        public async Task<object> GetVendorDetailsById(string userId)
+        {
+            return await _dataBaseLayer.GetVendorDetailsById(userId);
         }
     }
 }

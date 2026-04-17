@@ -2,6 +2,7 @@
 using elemechWisetrack.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.RegularExpressions;
 
 namespace elemechWisetrack.BusinessLayer
 {
@@ -12,13 +13,8 @@ namespace elemechWisetrack.BusinessLayer
         Task<object> UpdateColor(string userEmail, Guid id, ProductsCollors request);
         Task<object> ToggleColorStatus(Guid id);
         Task<object> SoftDeleteColor(Guid id);
-        Task<object> RestoreColor(Guid id);
         Task<object> DeleteColor(Guid id);
-        Task<object> AddProductColor(ProductColorRequest request);
-        Task<object> GetProductColors();
-        Task<object> GetColorByProduct(Guid productId);
-        Task<object> UpdateProductColor(Guid id, ProductColorRequest request);
-        Task<object> DeleteProductColor(Guid id);
+     
     }
     public partial interface IBusinessLayer : IBusinessLayer_Color
     {
@@ -29,7 +25,7 @@ namespace elemechWisetrack.BusinessLayer
     {
         public async Task<object> AddColors(string userEmail,[FromBody] ProductsCollors request)
         {
-            string baseSlug = GenerateSlugProduct(request.Name);
+            string baseSlug = CreateColorSlug(request.Name);
             return await _dataBaseLayer.AddColors(userEmail,request, baseSlug);
         }
 
@@ -40,7 +36,7 @@ namespace elemechWisetrack.BusinessLayer
 
         public async Task<object> UpdateColor(string userEmail, Guid id, ProductsCollors request)
         {
-            string baseSlug = GenerateSlugProduct(request.Name);
+            string baseSlug = CreateColorSlug(request.Name);
             return await _dataBaseLayer.UpdateColor(userEmail, id, request, baseSlug);
         }
         public async Task<object> ToggleColorStatus(Guid id)
@@ -53,40 +49,26 @@ namespace elemechWisetrack.BusinessLayer
             return await _dataBaseLayer.SoftDeleteColor(id);
         }
 
-        public async Task<object> RestoreColor(Guid id)
-        {
-            return await _dataBaseLayer.RestoreColor(id);
-        }
-
         public async Task<object> DeleteColor(Guid id)
         {
             return await _dataBaseLayer.DeleteColor(id);
         }
 
-        public async Task<object> AddProductColor(ProductColorRequest request)
+        private static string CreateColorSlug(string? name)
         {
-            return await _dataBaseLayer.AddProductColor(request);
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return Guid.NewGuid().ToString("N");
+            }
+
+            string slug = name.Trim().ToLowerInvariant();
+            slug = Regex.Replace(slug, @"\s+", "-");
+            slug = Regex.Replace(slug, @"[^a-z0-9\-]", string.Empty);
+            slug = Regex.Replace(slug, @"\-{2,}", "-").Trim('-');
+
+            return string.IsNullOrWhiteSpace(slug) ? Guid.NewGuid().ToString("N") : slug;
         }
 
-        public async Task<object> GetProductColors()
-        {
-            return await _dataBaseLayer.GetProductColors();
-        }
-
-        public async Task<object> GetColorByProduct(Guid productId)
-        {
-            return await _dataBaseLayer.GetColorByProduct(productId);
-        }
-
-        public async Task<object> UpdateProductColor(Guid id, ProductColorRequest request)
-        {
-            return await _dataBaseLayer.UpdateProductColor(id, request);
-        }
-
-        public async Task<object> DeleteProductColor(Guid id)
-        {
-            return await _dataBaseLayer.DeleteProductColor(id);
-        }
 
     }
 }

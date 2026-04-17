@@ -52,4 +52,9 @@ namespace elemechWisetrack.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
     }
+
+    public class VendorReviewRemarkRequest
+    {
+        public string? Message { get; set; }
+    }
 }

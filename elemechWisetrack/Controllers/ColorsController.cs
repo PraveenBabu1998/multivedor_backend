@@ -120,13 +120,6 @@ namespace elemechWisetrack.Controllers
             }
         }
 
-        [HttpPut("restore-color/{id}")]
-        public async Task<IActionResult> RestoreColor(Guid id)
-        {
-            var result = await _businessLayer.RestoreColor(id);
-            return Ok(result);
-        }
-
         [HttpDelete("delete-color/{id}")]
         public async Task<IActionResult> DeleteColor(Guid id)
         {
@@ -134,40 +127,5 @@ namespace elemechWisetrack.Controllers
             return Ok(result);
         }
 
-
-        [HttpPost("add")]
-        public async Task<IActionResult> Add(ProductColorRequest request)
-        {
-            var result = await _businessLayer.AddProductColor(request);
-            return Ok(result);
-        }
-
-        [HttpGet("get-product-color")]
-        public async Task<IActionResult> Get()
-        {
-            var result = await _businessLayer.GetProductColors();
-            return Ok(result);
-        }
-
-        [HttpGet("product/{productId}")]
-        public async Task<IActionResult> GetByProduct(Guid productId)
-        {
-            var result = await _businessLayer.GetColorByProduct(productId);
-            return Ok(result);
-        }
-
-        [HttpPut("update/{id}")]
-        public async Task<IActionResult> Update(Guid id, ProductColorRequest request)
-        {
-            var result = await _businessLayer.UpdateProductColor(id, request);
-            return Ok(result);
-        }
-
-        [HttpDelete("delete/{id}")]
-        public async Task<IActionResult> Delete(Guid id)
-        {
-            var result = await _businessLayer.DeleteProductColor(id);
-            return Ok(result);
-        }
     }
 }

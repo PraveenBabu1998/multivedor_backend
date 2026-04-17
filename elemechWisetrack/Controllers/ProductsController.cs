@@ -17,205 +17,108 @@ namespace elemechWisetrack.Controllers
             _businessLayer = businessLayer;
         }
 
-        [Route("insert")]
-        [HttpPost]
-        public async Task<IActionResult> AddSingleProduct([FromForm] ProductInsertModel request)
-        {
-            try
-            {
-                string userEmail = User.FindFirst(ClaimTypes.Email)?.Value ??
-                                   User.FindFirst("email")?.Value ??
-                                   User.FindFirst("UserName")?.Value;
-
-                if (string.IsNullOrEmpty(userEmail))
-                {
-                    return BadRequest("User Not Found");
-                }
-
-                var result = await _businessLayer.AddSingleProduct(userEmail, request);
-
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new
-                {
-                    success = false,
-                    message = ex.Message
-                });
-            }
-        }
-
-        [Route("list")]
-        [HttpGet]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetAllProducts(
-    [FromQuery] int? page,
-    [FromQuery] int? pageSize,
-
-    [FromQuery] Guid[]? categoryIds,
-    [FromQuery] Guid? subCategoryId,
-    [FromQuery] Guid[]? brandIds,
-
-    [FromQuery] string[]? colors,
-    [FromQuery] string[]? sizes,
-
-    [FromQuery] decimal? minPrice,
-    [FromQuery] decimal? maxPrice,
-
-    [FromQuery] string? search
-)
-        {
-            var data = await _businessLayer.GetAllProducts(
-                page, pageSize,
-                categoryIds, subCategoryId, brandIds,
-                colors, sizes,
-                minPrice, maxPrice,
-                search
-            );
-
-            return Ok(new
-            {
-                success = true,
-                message = "Product list successfully",
-                data
-            });
-        }
-
-        [Route("get/{productId}")]
-        [HttpGet]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetProductById(Guid productId)
-        {
-            var data = await _businessLayer.GetProductById(productId);
-            return Ok(new { Success = true, Message = "Product get successfully", data = data });
-        }
-
-        [Route("list-by-admin")]
-        [HttpGet]
-        public async Task<IActionResult> GetAllProductsOfAdmin(int? page, int? pageSize)
-        {
-
-            string userEmail = User.FindFirst(ClaimTypes.Email)?.Value ??
-                User.FindFirst("UserEmail")?.Value ??
-                User.FindFirst("email")?.Value;
-            var data = await _businessLayer.GetAllProductsOfAdmin(userEmail, page, pageSize);
-            return Ok(new { Success = true, Message = "Product list successfully", data = data });
-        }
-
-        [Route("update/{productId}")]
-        [HttpPut]
-        public async Task<IActionResult> UpdateProduct(
-    Guid productId,
-    [FromForm] ProductInsertModel request)
+        [HttpPost("insert")]
+        public async Task<IActionResult> Insert([FromForm] ProductInsertModel request)
         {
             string userEmail = User.FindFirst(ClaimTypes.Email)?.Value ??
-                               User.FindFirst("UserEmail")?.Value ??
+                               User.FindFirst("UserName")?.Value ??
                                User.FindFirst("email")?.Value;
 
-            var data = await _businessLayer.UpdateProduct(productId, userEmail, request);
+            var result = await _businessLayer.AddProduct(userEmail, request);
+            return Ok(result);
+        }
 
-            return Ok(new
+        [HttpGet("list")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Read()
+        {
+            var result = await _businessLayer.GetProducts();
+            return Ok(result);
+        }
+
+        [HttpGet("softdeleted-list")]
+        public async Task<IActionResult> SoftDeletedList()
+        {
+            var result = await _businessLayer.GetSoftDeletedProducts();
+            return Ok(result);
+        }
+
+        [HttpPut("update/{id}")]
+        public async Task<IActionResult> Update(Guid id, [FromForm] ProductInsertModel request)
+        {
+            var result = await _businessLayer.UpdateProduct(id, request);
+            return Ok(result);
+        }
+
+        [HttpPost("import")]
+        public async Task<IActionResult> ImportProducts(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
             {
-                Success = true,
-                Message = "Product updated successfully",
-                data = data
-            });
-        }
+                return BadRequest(new { success = false, message = "File is required" });
+            }
 
-        [HttpDelete("soft-delete-product/{productId}")]
-        public async Task<IActionResult> DeleteProduct(Guid productId)
-        {
-            var result = await _businessLayer.DeleteProduct(productId);
-            return Ok(result);
-        }
+            string extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            string[] allowedExtensions = { ".xls", ".xlsx" };
 
-        [HttpPut("restore-product/{productId}")]
-        public async Task<IActionResult> RestoreProduct(Guid productId)
-        {
-            var result = await _businessLayer.RestoreProduct(productId);
-            return Ok(result);
-        }
+            if (!allowedExtensions.Contains(extension))
+            {
+                return BadRequest(new { success = false, message = "Only .xls and .xlsx files are allowed" });
+            }
 
-        [HttpDelete("permanent-delete-product/{productId}")]
-        public async Task<IActionResult> PermanentDeleteProduct(Guid productId)
-        {
-            var result = await _businessLayer.PermanentDeleteProduct(productId);
+            string userEmail = User.FindFirst(ClaimTypes.Email)?.Value ??
+                               User.FindFirst("UserName")?.Value ??
+                               User.FindFirst("email")?.Value;
+
+            var result = await _businessLayer.UploadProductsExcel(file, userEmail);
             return Ok(result);
         }
 
         [HttpPost("upload-excel")]
         public async Task<IActionResult> UploadProductsExcel(IFormFile file)
         {
-            string userEmail = User.FindFirst(ClaimTypes.Email)?.Value??
-                User.FindFirst("email")?.Value??
-                User.FindFirst("userName")?.Value;
             if (file == null || file.Length == 0)
-                return BadRequest("File is required");
+            {
+                return BadRequest(new { success = false, message = "File is required" });
+            }
 
-            // Get file extension
-            var extension = Path.GetExtension(file.FileName).ToLower();
-
-            // Allowed Excel extensions
+            string extension = Path.GetExtension(file.FileName).ToLowerInvariant();
             string[] allowedExtensions = { ".xls", ".xlsx", ".csv" };
 
             if (!allowedExtensions.Contains(extension))
             {
-                return BadRequest("Invalid file format. Only .xls and .xlsx files are allowed.");
+                return BadRequest(new { success = false, message = "Invalid file format. Only .xls and .xlsx files are allowed." });
             }
 
-            var result =await _businessLayer.UploadProductsExcel(file,userEmail);
+            string userEmail = User.FindFirst(ClaimTypes.Email)?.Value ??
+                               User.FindFirst("email")?.Value ??
+                               User.FindFirst("UserName")?.Value;
 
-            return Ok(new {Success = false,Message = "Excel file is valid", result });
+            var result = await _businessLayer.UploadProductsExcel(file, userEmail);
+            return Ok(result);
         }
 
-        [HttpPut("toggle-sales-status/{productId}")]
-        public async Task<IActionResult> ToggleSalesStatus(Guid productId)
+        [HttpGet("export")]
+        public async Task<IActionResult> ExportProducts()
         {
-            var result = await _businessLayer.ToggleSalesStatus(productId);
-
-            return Ok(new
-            {
-                success = true,
-                message = "Sales status updated successfully",
-                data = result
-            });
+            var fileBytes = await _businessLayer.ExportProductsExcel();
+            return File(fileBytes,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"products-export-{DateTime.UtcNow:yyyyMMddHHmmss}.xlsx");
         }
 
-        [HttpGet("sales-products")]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetSalesProducts(
-    [FromQuery] int? page,
-    [FromQuery] int? pageSize,
-
-    [FromQuery] Guid[]? categoryIds,
-    [FromQuery] Guid? subCategoryId,
-    [FromQuery] Guid[]? brandIds,
-
-    [FromQuery] string[]? colors,
-    [FromQuery] string[]? sizes,
-
-    [FromQuery] decimal? minPrice,
-    [FromQuery] decimal? maxPrice,
-
-    [FromQuery] string? search
-)
+        [HttpDelete("softdelete/{id}")]
+        public async Task<IActionResult> SoftDelete(Guid id)
         {
-            var data = await _businessLayer.GetSalesProducts(
-                page, pageSize,
-                categoryIds, subCategoryId, brandIds,
-                colors, sizes,
-                minPrice, maxPrice,
-                search
-            );
-
-            return Ok(new
-            {
-                success = true,
-                message = "Sales product list",
-                data
-            });
+            var result = await _businessLayer.SoftDeleteProduct(id);
+            return Ok(result);
         }
 
+        [HttpDelete("delete/{id}")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            var result = await _businessLayer.DeleteProduct(id);
+            return Ok(result);
+        }
     }
 }

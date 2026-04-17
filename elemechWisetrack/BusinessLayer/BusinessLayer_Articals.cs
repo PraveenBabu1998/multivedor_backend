@@ -1,4 +1,5 @@
-﻿using elemechWisetrack.Models;
+﻿using CareerCracker.S3Services;
+using elemechWisetrack.Models;
 using System.Text.RegularExpressions;
 
 namespace elemechWisetrack.BusinessLayer
@@ -22,18 +23,8 @@ namespace elemechWisetrack.BusinessLayer
 
             if (model.Image != null)
             {
-                var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images");
-
-                if (!Directory.Exists(folderPath))
-                    Directory.CreateDirectory(folderPath);
-
-                var fileName = Guid.NewGuid() + Path.GetExtension(model.Image.FileName);
-                var fullPath = Path.Combine(folderPath, fileName);
-
-                using var stream = new FileStream(fullPath, FileMode.Create);
-                await model.Image.CopyToAsync(stream);
-
-                imagePath = "/images/" + fileName;
+                var uploaded = await S3StorageHelper.UploadFileAsync(model.Image, "uploads/articles");
+                imagePath = uploaded ?? "";
             }
 
             model.ImageUrl = imagePath;
@@ -54,22 +45,13 @@ namespace elemechWisetrack.BusinessLayer
 
         public async Task<object> UpdateArtical(string email, Guid id, ArticalModel model)
         {
-            string imagePath = model.ImageUrl;
+            string imagePath = model.ImageUrl ?? "";
 
             if (model.Image != null)
             {
-                var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images");
-
-                if (!Directory.Exists(folderPath))
-                    Directory.CreateDirectory(folderPath);
-
-                var fileName = Guid.NewGuid() + Path.GetExtension(model.Image.FileName);
-                var fullPath = Path.Combine(folderPath, fileName);
-
-                using var stream = new FileStream(fullPath, FileMode.Create);
-                await model.Image.CopyToAsync(stream);
-
-                imagePath = "/images/" + fileName;
+                await S3StorageHelper.DeleteStoredMediaAsync(model.ImageUrl);
+                var uploaded = await S3StorageHelper.UploadFileAsync(model.Image, "uploads/articles");
+                imagePath = uploaded ?? "";
             }
 
             model.ImageUrl = imagePath;

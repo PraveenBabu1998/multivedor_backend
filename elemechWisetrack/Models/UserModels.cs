@@ -44,6 +44,10 @@ namespace elemechWisetrack.Models
         public Guid CategoryId { get; set; }
         public Guid? SubCategoryId { get; set; }
         public Guid? BrandId { get; set; }
+        public Guid? ColorId { get; set; }
+        public Guid? SizeId { get; set; }
+        public List<Guid>? ColorIds { get; set; }
+        public List<Guid>? SizeIds { get; set; }
 
         // Pricing
         public decimal Price { get; set; }

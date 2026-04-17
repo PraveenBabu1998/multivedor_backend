@@ -9,8 +9,11 @@ using elemechWisetrack.Areas.Identity.Data;
 using elemechWisetrack.BusinessLayer;
 using elemechWisetrack.DataBaseLayer;
 using elemechWisetrack.UserManager;
+using CareerCracker.S3Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+S3StorageHelper.Initialize(builder.Configuration);
 
 // ======================================================
 // 1️⃣ Database

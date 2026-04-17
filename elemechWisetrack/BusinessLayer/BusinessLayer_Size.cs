@@ -1,4 +1,5 @@
 ﻿using elemechWisetrack.Models;
+using System.Text.RegularExpressions;
 
 namespace elemechWisetrack.BusinessLayer
 {
@@ -9,13 +10,8 @@ namespace elemechWisetrack.BusinessLayer
         Task<object> UpdateSize(Guid id, ProductSizes request);
         Task<object> ToggleSizeStatus(Guid id);
         Task<object> SoftDeleteSize(Guid id);
-        Task<object> RestoreSize(Guid id);
         Task<object> DeleteSize(Guid id);
-        Task<object> AddProductSize(ProductSizeRequest request);
-        Task<object> GetProductSizes();
-        Task<object> GetSizeByProduct(Guid productId);
-        Task<object> DeleteProductSize(Guid id);
-        Task<object> UpdateProductSize(Guid id, ProductSizeRequest request);
+    
     }
 
     public partial interface IBusinessLayer : IBusinessLayer_Size { }
@@ -24,7 +20,7 @@ namespace elemechWisetrack.BusinessLayer
     {
         public async Task<object> AddSize(string userEmail, ProductSizes request)
         {
-            string slug = GenerateSlugProduct(request.Name);
+            string slug = CreateSizeSlug(request.Name);
             return await _dataBaseLayer.AddSize(userEmail, request, slug);
         }
 
@@ -35,7 +31,7 @@ namespace elemechWisetrack.BusinessLayer
 
         public async Task<object> UpdateSize(Guid id, ProductSizes request)
         {
-            string slug = GenerateSlugProduct(request.Name);
+            string slug = CreateSizeSlug(request.Name);
             return await _dataBaseLayer.UpdateSize(id, request, slug);
         }
 
@@ -48,40 +44,26 @@ namespace elemechWisetrack.BusinessLayer
         {
             return await _dataBaseLayer.SoftDeleteSize(id);
         }
-
-        public async Task<object> RestoreSize(Guid id)
-        {
-            return await _dataBaseLayer.RestoreSize(id);
-        }
-
+       
         public async Task<object> DeleteSize(Guid id)
         {
             return await _dataBaseLayer.DeleteSize(id);
         }
 
-        public async Task<object> AddProductSize(ProductSizeRequest request)
+        private static string CreateSizeSlug(string? name)
         {
-            return await _dataBaseLayer.AddProductSize(request);
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return Guid.NewGuid().ToString("N");
+            }
+
+            string slug = name.Trim().ToLowerInvariant();
+            slug = Regex.Replace(slug, @"\s+", "-");
+            slug = Regex.Replace(slug, @"[^a-z0-9\-]", string.Empty);
+            slug = Regex.Replace(slug, @"\-{2,}", "-").Trim('-');
+
+            return string.IsNullOrWhiteSpace(slug) ? Guid.NewGuid().ToString("N") : slug;
         }
 
-        public async Task<object> GetProductSizes()
-        {
-            return await _dataBaseLayer.GetProductSizes();
-        }
-
-        public async Task<object> GetSizeByProduct(Guid productId)
-        {
-            return await _dataBaseLayer.GetSizeByProduct(productId);
-        }
-
-        public async Task<object> DeleteProductSize(Guid id)
-        {
-            return await _dataBaseLayer.DeleteProductSize(id);
-        }
-
-        public async Task<object> UpdateProductSize(Guid id, ProductSizeRequest request)
-        {
-            return await _dataBaseLayer.UpdateProductSize(id, request);
-        }
     }
 }

@@ -1,12 +1,16 @@
 ﻿using elemechWisetrack.Areas.Identity.Data;
 using elemechWisetrack.BusinessLayer;
+using elemechWisetrack.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Primitives;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 
 namespace elemechWisetrack.Controllers
 {
@@ -41,9 +45,88 @@ namespace elemechWisetrack.Controllers
         [HttpPost]
         public async Task<IActionResult> RegisterVendor()
         {
-            var form = await Request.ReadFormAsync();
-            var result = await _businessLayer.RegisterVendor(form);
-            return Ok(result);
+            Request.EnableBuffering();
+            IFormCollection form;
+
+            // 1) Try standard form read first (multipart/form-data or x-www-form-urlencoded)
+            try
+            {
+                form = await Request.ReadFormAsync();
+                if (form != null && form.Count > 0)
+                {
+                    var registerResult = await _businessLayer.RegisterVendor(form);
+                    return Ok(registerResult);
+                }
+            }
+            catch
+            {
+                // ignore and try other parsers
+            }
+
+            Request.Body.Position = 0;
+
+            // 2) Optional support: JSON payload
+            if (Request.ContentType?.Contains("application/json", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                using var reader = new StreamReader(Request.Body);
+                var body = await reader.ReadToEndAsync();
+
+                if (string.IsNullOrWhiteSpace(body))
+                    return BadRequest(new { success = false, message = "Request body is required." });
+
+                Dictionary<string, string>? data;
+                try
+                {
+                    data = JsonSerializer.Deserialize<Dictionary<string, string>>(body,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                }
+                catch
+                {
+                    return BadRequest(new { success = false, message = "Invalid JSON body." });
+                }
+
+                if (data == null || data.Count == 0)
+                    return BadRequest(new { success = false, message = "JSON body is empty." });
+
+                var dict = data.ToDictionary(kv => kv.Key, kv => new StringValues(kv.Value ?? string.Empty));
+                form = new FormCollection(dict);
+            }
+            else
+            {
+                Request.Body.Position = 0;
+                // 3) Fallback: raw form body without proper content-type.
+                using var reader = new StreamReader(Request.Body);
+                var rawBody = await reader.ReadToEndAsync();
+
+                if (!string.IsNullOrWhiteSpace(rawBody))
+                {
+                    var parsed = QueryHelpers.ParseQuery(rawBody);
+                    if (parsed.Count > 0)
+                    {
+                        var dict = parsed.ToDictionary(kv => kv.Key, kv => kv.Value);
+                        form = new FormCollection(dict);
+                    }
+                    else
+                    {
+                        return BadRequest(new
+                        {
+                            success = false,
+                            message = "Unsupported Content-Type. Use multipart/form-data."
+                        });
+                    }
+                }
+                else
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Unsupported Content-Type. Use multipart/form-data."
+                    });
+                }
+            }
+
+            var registerResultFinal = await _businessLayer.RegisterVendor(form);
+            return Ok(registerResultFinal);
         }
 
         [Authorize(Roles = "SUPERADMIN")]
@@ -89,6 +172,26 @@ namespace elemechWisetrack.Controllers
         public async Task<IActionResult> GetUsers()
         {
             var result = await _businessLayer.GetAllUsersByRole();
+            return Ok(result);
+        }
+
+        [Authorize(Roles = "SUPERADMIN")]
+        [HttpPost("vendor-review/{id}")]
+        public async Task<IActionResult> AddVendorReview(string id, [FromBody] VendorReviewRemarkRequest request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.Message))
+                return BadRequest(new { success = false, message = "Review message is required" });
+
+            var adminEmail = User.FindFirstValue(ClaimTypes.Email);
+            var result = await _businessLayer.AddVendorReviewRemark(id, adminEmail ?? string.Empty, request.Message);
+            return Ok(result);
+        }
+
+        [Authorize(Roles = "SUPERADMIN")]
+        [HttpGet("vendor-details/{id}")]
+        public async Task<IActionResult> GetVendorDetailsById(string id)
+        {
+            var result = await _businessLayer.GetVendorDetailsById(id);
             return Ok(result);
         }
 

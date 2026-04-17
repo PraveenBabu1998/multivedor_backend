@@ -62,12 +62,6 @@ namespace elemechWisetrack.Controllers
             return Ok(result);
         }
 
-        [HttpPut("restore/{id}")]
-        public async Task<IActionResult> RestoreSize(Guid id)
-        {
-            var result = await _businessLayer.RestoreSize(id);
-            return Ok(result);
-        }
 
         [HttpDelete("delete-size-permanent/{id}")]
         public async Task<IActionResult> DeleteSizePermanent(Guid id)
@@ -76,43 +70,5 @@ namespace elemechWisetrack.Controllers
             return Ok(result);
         }
 
-        // CREATE
-        [HttpPost("add-product-size")]
-        public async Task<IActionResult> AddProductSize(ProductSizeRequest request)
-        {
-            var result = await _businessLayer.AddProductSize(request);
-            return Ok(result);
-        }
-
-        // GET ALL
-        [HttpGet("get-product-sizes")]
-        public async Task<IActionResult> GetProductSizes()
-        {
-            var result = await _businessLayer.GetProductSizes();
-            return Ok(result);
-        }
-
-        // GET BY PRODUCT
-        [HttpGet("get-product-size/{productId}")]
-        public async Task<IActionResult> GetSizeByProduct(Guid productId)
-        {
-            var result = await _businessLayer.GetSizeByProduct(productId);
-            return Ok(result);
-        }
-
-        // DELETE
-        [HttpDelete("delete-product-size/{id}")]
-        public async Task<IActionResult> DeleteProductSize(Guid id)
-        {
-            var result = await _businessLayer.DeleteProductSize(id);
-            return Ok(result);
-        }
-
-        [HttpPut("update-product-size/{id}")]
-        public async Task<IActionResult> UpdateProductSize(Guid id, ProductSizeRequest request)
-        {
-            var result = await _businessLayer.UpdateProductSize(id, request);
-            return Ok(result);
-        }
     }
 }

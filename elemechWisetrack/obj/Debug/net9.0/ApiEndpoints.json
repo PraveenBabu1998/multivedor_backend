@@ -766,40 +766,8 @@
   },
   {
     "ContainingType": "elemechWisetrack.Controllers.ColorsController",
-    "Method": "Add",
-    "RelativePath": "api/colors/add",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "request",
-        "Type": "elemechWisetrack.Models.ProductColorRequest",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "elemechWisetrack.Controllers.ColorsController",
     "Method": "DeleteColor",
     "RelativePath": "api/colors/delete-color/{id}",
-    "HttpMethod": "DELETE",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Guid",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "elemechWisetrack.Controllers.ColorsController",
-    "Method": "Delete",
-    "RelativePath": "api/colors/delete/{id}",
     "HttpMethod": "DELETE",
     "IsController": true,
     "Order": 0,
@@ -824,16 +792,6 @@
   },
   {
     "ContainingType": "elemechWisetrack.Controllers.ColorsController",
-    "Method": "Get",
-    "RelativePath": "api/colors/get-product-color",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "elemechWisetrack.Controllers.ColorsController",
     "Method": "AddColors",
     "RelativePath": "api/colors/insert",
     "HttpMethod": "POST",
@@ -843,38 +801,6 @@
       {
         "Name": "request",
         "Type": "elemechWisetrack.Models.ProductsCollors",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "elemechWisetrack.Controllers.ColorsController",
-    "Method": "GetByProduct",
-    "RelativePath": "api/colors/product/{productId}",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "productId",
-        "Type": "System.Guid",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "elemechWisetrack.Controllers.ColorsController",
-    "Method": "RestoreColor",
-    "RelativePath": "api/colors/restore-color/{id}",
-    "HttpMethod": "PUT",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Guid",
         "IsRequired": true
       }
     ],
@@ -928,27 +854,6 @@
       {
         "Name": "request",
         "Type": "elemechWisetrack.Models.ProductsCollors",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "elemechWisetrack.Controllers.ColorsController",
-    "Method": "Update",
-    "RelativePath": "api/colors/update/{id}",
-    "HttpMethod": "PUT",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Guid",
-        "IsRequired": true
-      },
-      {
-        "Name": "request",
-        "Type": "elemechWisetrack.Models.ProductColorRequest",
         "IsRequired": true
       }
     ],
@@ -1382,14 +1287,14 @@
   },
   {
     "ContainingType": "elemechWisetrack.Controllers.ProductsController",
-    "Method": "GetProductById",
-    "RelativePath": "api/products/get/{productId}",
-    "HttpMethod": "GET",
+    "Method": "Delete",
+    "RelativePath": "api/products/delete/{id}",
+    "HttpMethod": "DELETE",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "productId",
+        "Name": "id",
         "Type": "System.Guid",
         "IsRequired": true
       }
@@ -1398,7 +1303,33 @@
   },
   {
     "ContainingType": "elemechWisetrack.Controllers.ProductsController",
-    "Method": "AddSingleProduct",
+    "Method": "ExportProducts",
+    "RelativePath": "api/products/export",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.ProductsController",
+    "Method": "ImportProducts",
+    "RelativePath": "api/products/import",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "file",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "elemechWisetrack.Controllers.ProductsController",
+    "Method": "Insert",
     "RelativePath": "api/products/insert",
     "HttpMethod": "POST",
     "IsController": true,
@@ -1437,6 +1368,26 @@
       {
         "Name": "BrandId",
         "Type": "System.Nullable\u00601[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "ColorId",
+        "Type": "System.Nullable\u00601[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "SizeId",
+        "Type": "System.Nullable\u00601[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "ColorIds",
+        "Type": "System.Collections.Generic.List\u00601[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "SizeIds",
+        "Type": "System.Collections.Generic.List\u00601[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
         "IsRequired": false
       },
       {
@@ -1544,96 +1495,24 @@
   },
   {
     "ContainingType": "elemechWisetrack.Controllers.ProductsController",
-    "Method": "GetAllProducts",
-    "RelativePath": "api/products/list",
+    "Method": "Read",
+    "RelativePath": "api/products/read",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
-    "Parameters": [
-      {
-        "Name": "page",
-        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "pageSize",
-        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "categoryIds",
-        "Type": "System.Guid[]",
-        "IsRequired": false
-      },
-      {
-        "Name": "subCategoryId",
-        "Type": "System.Nullable\u00601[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "brandIds",
-        "Type": "System.Guid[]",
-        "IsRequired": false
-      },
-      {
-        "Name": "colors",
-        "Type": "System.String[]",
-        "IsRequired": false
-      },
-      {
-        "Name": "sizes",
-        "Type": "System.String[]",
-        "IsRequired": false
-      },
-      {
-        "Name": "minPrice",
-        "Type": "System.Nullable\u00601[[System.Decimal, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "maxPrice",
-        "Type": "System.Nullable\u00601[[System.Decimal, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "search",
-        "Type": "System.String",
-        "IsRequired": false
-      }
-    ],
+    "Parameters": [],
     "ReturnTypes": []
   },
   {
     "ContainingType": "elemechWisetrack.Controllers.ProductsController",
-    "Method": "GetAllProductsOfAdmin",
-    "RelativePath": "api/products/list-by-admin",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "page",
-        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "pageSize",
-        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
-        "IsRequired": false
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "elemechWisetrack.Controllers.ProductsController",
-    "Method": "PermanentDeleteProduct",
-    "RelativePath": "api/products/permanent-delete-product/{productId}",
+    "Method": "SoftDelete",
+    "RelativePath": "api/products/softdelete/{id}",
     "HttpMethod": "DELETE",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "productId",
+        "Name": "id",
         "Type": "System.Guid",
         "IsRequired": true
       }
@@ -1642,123 +1521,24 @@
   },
   {
     "ContainingType": "elemechWisetrack.Controllers.ProductsController",
-    "Method": "RestoreProduct",
-    "RelativePath": "api/products/restore-product/{productId}",
-    "HttpMethod": "PUT",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "productId",
-        "Type": "System.Guid",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "elemechWisetrack.Controllers.ProductsController",
-    "Method": "GetSalesProducts",
-    "RelativePath": "api/products/sales-products",
+    "Method": "SoftDeletedList",
+    "RelativePath": "api/products/softdeleted-list",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
-    "Parameters": [
-      {
-        "Name": "page",
-        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "pageSize",
-        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "categoryIds",
-        "Type": "System.Guid[]",
-        "IsRequired": false
-      },
-      {
-        "Name": "subCategoryId",
-        "Type": "System.Nullable\u00601[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "brandIds",
-        "Type": "System.Guid[]",
-        "IsRequired": false
-      },
-      {
-        "Name": "colors",
-        "Type": "System.String[]",
-        "IsRequired": false
-      },
-      {
-        "Name": "sizes",
-        "Type": "System.String[]",
-        "IsRequired": false
-      },
-      {
-        "Name": "minPrice",
-        "Type": "System.Nullable\u00601[[System.Decimal, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "maxPrice",
-        "Type": "System.Nullable\u00601[[System.Decimal, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "search",
-        "Type": "System.String",
-        "IsRequired": false
-      }
-    ],
+    "Parameters": [],
     "ReturnTypes": []
   },
   {
     "ContainingType": "elemechWisetrack.Controllers.ProductsController",
-    "Method": "DeleteProduct",
-    "RelativePath": "api/products/soft-delete-product/{productId}",
-    "HttpMethod": "DELETE",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "productId",
-        "Type": "System.Guid",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "elemechWisetrack.Controllers.ProductsController",
-    "Method": "ToggleSalesStatus",
-    "RelativePath": "api/products/toggle-sales-status/{productId}",
+    "Method": "Update",
+    "RelativePath": "api/products/update/{id}",
     "HttpMethod": "PUT",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "productId",
-        "Type": "System.Guid",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "elemechWisetrack.Controllers.ProductsController",
-    "Method": "UpdateProduct",
-    "RelativePath": "api/products/update/{productId}",
-    "HttpMethod": "PUT",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "productId",
+        "Name": "id",
         "Type": "System.Guid",
         "IsRequired": true
       },
@@ -1795,6 +1575,26 @@
       {
         "Name": "BrandId",
         "Type": "System.Nullable\u00601[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "ColorId",
+        "Type": "System.Nullable\u00601[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "SizeId",
+        "Type": "System.Nullable\u00601[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "ColorIds",
+        "Type": "System.Collections.Generic.List\u00601[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "SizeIds",
+        "Type": "System.Collections.Generic.List\u00601[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
         "IsRequired": false
       },
       {
@@ -2064,38 +1864,6 @@
   },
   {
     "ContainingType": "elemechWisetrack.Controllers.SizeController",
-    "Method": "AddProductSize",
-    "RelativePath": "api/size/add-product-size",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "request",
-        "Type": "elemechWisetrack.Models.ProductSizeRequest",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "elemechWisetrack.Controllers.SizeController",
-    "Method": "DeleteProductSize",
-    "RelativePath": "api/size/delete-product-size/{id}",
-    "HttpMethod": "DELETE",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Guid",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "elemechWisetrack.Controllers.SizeController",
     "Method": "DeleteSizePermanent",
     "RelativePath": "api/size/delete-size-permanent/{id}",
     "HttpMethod": "DELETE",
@@ -2138,48 +1906,6 @@
   },
   {
     "ContainingType": "elemechWisetrack.Controllers.SizeController",
-    "Method": "GetSizeByProduct",
-    "RelativePath": "api/size/get-product-size/{productId}",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "productId",
-        "Type": "System.Guid",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "elemechWisetrack.Controllers.SizeController",
-    "Method": "GetProductSizes",
-    "RelativePath": "api/size/get-product-sizes",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "elemechWisetrack.Controllers.SizeController",
-    "Method": "RestoreSize",
-    "RelativePath": "api/size/restore/{id}",
-    "HttpMethod": "PUT",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Guid",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "elemechWisetrack.Controllers.SizeController",
     "Method": "ToggleSize",
     "RelativePath": "api/size/toggle/{id}",
     "HttpMethod": "PATCH",
@@ -2189,27 +1915,6 @@
       {
         "Name": "id",
         "Type": "System.Guid",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "elemechWisetrack.Controllers.SizeController",
-    "Method": "UpdateProductSize",
-    "RelativePath": "api/size/update-product-size/{id}",
-    "HttpMethod": "PUT",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Guid",
-        "IsRequired": true
-      },
-      {
-        "Name": "request",
-        "Type": "elemechWisetrack.Models.ProductSizeRequest",
         "IsRequired": true
       }
     ],

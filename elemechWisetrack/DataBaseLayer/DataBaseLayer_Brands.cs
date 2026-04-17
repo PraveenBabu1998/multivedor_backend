@@ -1,4 +1,5 @@
-﻿using elemechWisetrack.Models;
+﻿using CareerCracker.S3Services;
+using elemechWisetrack.Models;
 using Humanizer;
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;
@@ -41,22 +42,11 @@ namespace elemechWisetrack.DataBaseLayer
             }
 
             // 🔹 Save Image
-            string imagePath = null;
+            string? imagePath = null;
 
             if (request.Logo != null)
             {
-                string folder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/brands");
-
-                if (!Directory.Exists(folder))
-                    Directory.CreateDirectory(folder);
-
-                string fileName = Guid.NewGuid() + Path.GetExtension(request.Logo.FileName);
-                string fullPath = Path.Combine(folder, fileName);
-
-                using var stream = new FileStream(fullPath, FileMode.Create);
-                await request.Logo.CopyToAsync(stream);
-
-                imagePath = "/brands/" + fileName;
+                imagePath = await S3StorageHelper.UploadFileAsync(request.Logo, "brands");
             }
 
             // 🔹 Insert
@@ -168,27 +158,10 @@ VALUES
 
             if (request.Logo != null)
             {
-                string folder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/brands");
-
-                if (!Directory.Exists(folder))
-                    Directory.CreateDirectory(folder);
-
-                string fileName = Guid.NewGuid() + Path.GetExtension(request.Logo.FileName);
-                string fullPath = Path.Combine(folder, fileName);
-
-                using var stream = new FileStream(fullPath, FileMode.Create);
-                await request.Logo.CopyToAsync(stream);
-
-                newImage = "/brands/" + fileName;
-
-                // 🔥 delete old file
                 if (!string.IsNullOrEmpty(oldImage))
-                {
-                    string oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", oldImage.TrimStart('/'));
+                    await S3StorageHelper.DeleteStoredMediaAsync(oldImage);
 
-                    if (File.Exists(oldPath))
-                        File.Delete(oldPath);
-                }
+                newImage = await S3StorageHelper.UploadFileAsync(request.Logo, "brands");
             }
 
             // 🔹 Update query

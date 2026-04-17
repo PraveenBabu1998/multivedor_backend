@@ -1,4 +1,5 @@
-﻿using elemechWisetrack.Models;
+﻿using CareerCracker.S3Services;
+using elemechWisetrack.Models;
 using Humanizer;
 using Npgsql;
 using System.Text.RegularExpressions;
@@ -61,24 +62,11 @@ namespace elemechWisetrack.DataBaseLayer
                 }
 
                 // ✅ STEP 1: Handle Image Upload
-                string imagePath = null;
+                string? imagePath = null;
 
                 if (model.Image != null)
                 {
-                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
-
-                    if (!Directory.Exists(uploadsFolder))
-                        Directory.CreateDirectory(uploadsFolder);
-
-                    var fileName = Guid.NewGuid() + Path.GetExtension(model.Image.FileName);
-                    var fullPath = Path.Combine(uploadsFolder, fileName);
-
-                    using (var stream = new FileStream(fullPath, FileMode.Create))
-                    {
-                        await model.Image.CopyToAsync(stream);
-                    }
-
-                    imagePath = "/uploads/" + fileName; // ✅ store this in DB
+                    imagePath = await S3StorageHelper.UploadFileAsync(model.Image, "uploads/blogs");
                 }
 
                 string query = @"
@@ -235,20 +223,8 @@ namespace elemechWisetrack.DataBaseLayer
                 // 🔹 STEP 4: Upload New Image (if provided)
                 if (model.Image != null)
                 {
-                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
-
-                    if (!Directory.Exists(uploadsFolder))
-                        Directory.CreateDirectory(uploadsFolder);
-
-                    var fileName = Guid.NewGuid() + Path.GetExtension(model.Image.FileName);
-                    var fullPath = Path.Combine(uploadsFolder, fileName);
-
-                    using (var stream = new FileStream(fullPath, FileMode.Create))
-                    {
-                        await model.Image.CopyToAsync(stream);
-                    }
-
-                    imagePath = "/uploads/" + fileName; // ✅ new image path
+                    await S3StorageHelper.DeleteStoredMediaAsync(imagePath);
+                    imagePath = await S3StorageHelper.UploadFileAsync(model.Image, "uploads/blogs");
                 }
 
                 // 🔹 STEP 5: Update Query

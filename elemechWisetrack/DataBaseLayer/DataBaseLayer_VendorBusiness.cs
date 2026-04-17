@@ -256,6 +256,30 @@ namespace elemechWisetrack.DataBaseLayer
                         vendorId = result.ToString();
                     }
 
+                    string? vendorStatus = null;
+                    string? adminReviewMessage = null;
+                    string? reviewedBy = null;
+                    object? reviewedAt = null;
+
+                    const string getReviewQuery = @"
+                SELECT ""Status"", ""RejectionReason"", ""ApprovedBy"", ""ApprovedAt""
+                FROM ""AspNetUsers""
+                WHERE ""Id"" = @VendorId
+                LIMIT 1;";
+
+                    using (var reviewCmd = new NpgsqlCommand(getReviewQuery, conn))
+                    {
+                        reviewCmd.Parameters.AddWithValue("@VendorId", vendorId);
+                        using var reviewReader = await reviewCmd.ExecuteReaderAsync();
+                        if (await reviewReader.ReadAsync())
+                        {
+                            vendorStatus = reviewReader["Status"]?.ToString();
+                            adminReviewMessage = reviewReader["RejectionReason"]?.ToString();
+                            reviewedBy = reviewReader["ApprovedBy"]?.ToString();
+                            reviewedAt = reviewReader["ApprovedAt"] == DBNull.Value ? null : reviewReader["ApprovedAt"];
+                        }
+                    }
+
                     // 2️⃣ Get Business Details
                     string getQuery = @"
                 SELECT *
@@ -312,7 +336,11 @@ namespace elemechWisetrack.DataBaseLayer
                                     IsVerified = reader["IsVerified"],
                                     IsActive = reader["IsActive"],
                                     CreatedAt = reader["CreatedAt"],
-                                    UpdatedAt = reader["UpdatedAt"]
+                                    UpdatedAt = reader["UpdatedAt"],
+                                    VendorStatus = vendorStatus,
+                                    AdminReviewMessage = adminReviewMessage,
+                                    ReviewedBy = reviewedBy,
+                                    ReviewedAt = reviewedAt
                                 }
                             };
                         }
